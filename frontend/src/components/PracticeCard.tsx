@@ -9,42 +9,22 @@ interface PracticeCardProps {
     level: string;
     image: string;
     description: string;
-    isPremium: boolean;
   };
-  onUnlock: () => void;
 }
 
-export default function PracticeCard({ practice, onUnlock }: PracticeCardProps) {
+export default function PracticeCard({ practice }: PracticeCardProps) {
   const handleClick = () => {
-    if (practice.isPremium) {
-      onUnlock();
-    } else {
-      // Navigate to practice detail
-      alert(`Starting ${practice.title}...`);
-    }
+    alert(`Starting ${practice.title}...`);
   };
 
   return (
     <div className="relative bg-gradient-to-br from-[#2d1b4e] to-[#1a0b2e] rounded-xl overflow-hidden shadow-xl border border-purple-500/20 hover:border-purple-500/40 transition-all group">
-      {practice.isPremium && (
-        <div className="absolute top-3 right-3 z-10 bg-[#d4af37] text-[#1a0b2e] px-3 py-1 rounded-full text-xs font-bold">
-          PREMIUM
-        </div>
-      )}
-
       <div className="relative h-48 overflow-hidden">
         <img 
           src={practice.image} 
           alt={practice.title}
-          className={`w-full h-full object-cover transition-all ${practice.isPremium ? 'blur-sm group-hover:blur-none' : ''}`}
+          className="w-full h-full object-cover transition-all group-hover:scale-105"
         />
-        {practice.isPremium && (
-          <div className="absolute inset-0 bg-[#1a0b2e]/60 flex items-center justify-center group-hover:opacity-0 transition-opacity">
-            <svg className="w-12 h-12 text-[#d4af37]" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-            </svg>
-          </div>
-        )}
       </div>
 
       <div className="p-5">
@@ -71,13 +51,9 @@ export default function PracticeCard({ practice, onUnlock }: PracticeCardProps) 
 
           <button
             onClick={handleClick}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-              practice.isPremium 
-                ? 'bg-[#d4af37]/20 text-[#d4af37] hover:bg-[#d4af37]/30' 
-                : 'bg-purple-600 text-white hover:bg-purple-700'
-            }`}
+            className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-purple-600 text-white hover:bg-purple-700"
           >
-            {practice.isPremium ? 'Unlock' : 'Start'}
+            Start
           </button>
         </div>
       </div>

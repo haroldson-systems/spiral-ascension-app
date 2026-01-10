@@ -34,9 +34,6 @@ export default function MoonSync() {
     <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1a0b2e] rounded-xl p-8 shadow-xl border border-purple-500/20">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-3xl font-bold text-[#e8e8f0]">MoonSync</h2>
-        <span className="px-4 py-2 bg-[#d4af37]/20 text-[#d4af37] rounded-full text-sm font-bold">
-          PREMIUM
-        </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -87,8 +84,8 @@ export default function MoonSync() {
         ))}
       </div>
 
-      <button className="w-full mt-6 py-3 bg-[#d4af37]/20 text-[#d4af37] rounded-lg font-semibold hover:bg-[#d4af37]/30 transition-all">
-        Unlock MoonSync Tracker
+      <button className="w-full mt-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all">
+        Open MoonSync Tracker
       </button>
     </div>
   );
