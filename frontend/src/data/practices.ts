@@ -6,8 +6,7 @@ export const practices = [
     duration: "15 min",
     level: "Foundation",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211741764_51e733b6.webp",
-    description: "Spiral breathing to activate your energetic core and clear stagnant patterns.",
-    isPremium: false
+    description: "Spiral breathing to activate your energetic core and clear stagnant patterns."
   },
   {
     id: 2,
@@ -16,8 +15,7 @@ export const practices = [
     duration: "20 min",
     level: "Intermediate",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211743502_6ba5fae2.webp",
-    description: "Body-based integration practice for processing stored trauma and emotion.",
-    isPremium: true
+    description: "Body-based integration practice for processing stored trauma and emotion."
   },
   {
     id: 3,
@@ -26,8 +24,7 @@ export const practices = [
     duration: "30 min",
     level: "Advanced",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211745366_22c16c09.webp",
-    description: "Guided journey to identify and integrate your shadow aspects with compassion.",
-    isPremium: true
+    description: "Guided journey to identify and integrate your shadow aspects with compassion."
   },
   {
     id: 4,
@@ -36,8 +33,7 @@ export const practices = [
     duration: "25 min",
     level: "Advanced",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211747223_f3c4cda4.webp",
-    description: "Sit in the space between—learning to be comfortable with emptiness and uncertainty.",
-    isPremium: true
+    description: "Sit in the space between—learning to be comfortable with emptiness and uncertainty."
   },
   {
     id: 5,
@@ -46,8 +42,7 @@ export const practices = [
     duration: "10 min",
     level: "Foundation",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211749211_e613c756.webp",
-    description: "Physical practice to anchor your sovereignty and reclaim your power.",
-    isPremium: false
+    description: "Physical practice to anchor your sovereignty and reclaim your power."
   },
   {
     id: 6,
@@ -56,8 +51,7 @@ export const practices = [
     duration: "Variable",
     level: "Intermediate",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211750962_dca28c92.webp",
-    description: "Work with your dreams as messages from the unconscious—decode and integrate.",
-    isPremium: true
+    description: "Work with your dreams as messages from the unconscious—decode and integrate."
   },
   {
     id: 7,
@@ -66,8 +60,7 @@ export const practices = [
     duration: "40 min",
     level: "Advanced",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211752679_be07d31e.webp",
-    description: "Healing practice to honor, release, and transform ancestral patterns.",
-    isPremium: true
+    description: "Healing practice to honor, release, and transform ancestral patterns."
   },
   {
     id: 8,
@@ -76,8 +69,7 @@ export const practices = [
     duration: "20 min",
     level: "Intermediate",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211754406_fad2628b.webp",
-    description: "Compassionate conversation with your younger self to heal and integrate wounds.",
-    isPremium: true
+    description: "Compassionate conversation with your younger self to heal and integrate wounds."
   },
   {
     id: 9,
@@ -86,7 +78,6 @@ export const practices = [
     duration: "15 min",
     level: "Foundation",
     image: "https://d64gsuwffb70l.cloudfront.net/68eab2d3d61e95e3442aaaf8_1760211756168_24a8a8c5.webp",
-    description: "Align your energy with cosmic cycles and natural rhythms for deeper flow.",
-    isPremium: false
+    description: "Align your energy with cosmic cycles and natural rhythms for deeper flow."
   }
 ];
