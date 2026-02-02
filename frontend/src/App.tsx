@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ModulePage from "./pages/ModulePage.tsx";
+import MoonSyncTrackerPage from "./pages/MoonSyncTrackerPage";
 
 
 const queryClient = new QueryClient();
@@ -21,6 +22,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
   <Route path="/" element={<Index />} />
+
+  {/* MoonSync full tracker */}
+  <Route path="/moonsync" element={<MoonSyncTrackerPage />} />
 
   {/* NEW MODULE PAGE ROUTE */}
   <Route path="/module/:id" element={<ModulePage />} />

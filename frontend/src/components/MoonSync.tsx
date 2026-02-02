@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const moonPhases = [
   {
@@ -84,9 +85,12 @@ export default function MoonSync() {
         ))}
       </div>
 
-      <button className="w-full mt-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all">
+      <Link
+        to="/moonsync"
+        className="block w-full mt-6 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all text-center"
+      >
         Open MoonSync Tracker
-      </button>
+      </Link>
     </div>
   );
 }
