@@ -1,3 +1,5 @@
+# **MODULE 1: MENTAL ALCHEMY**
+
 ### **TIER 3 — THE ADEPT**
 **Hermetic Law:** All is Mind
 **Chakra:** Throat (Vishuddha)
@@ -57,15 +59,7 @@ You are not voiceless. You were only forgetting the spell.
 Let every word now be sacred. Let every sentence shape a spiral.
 
 
-# **MODULE 1: MENTAL ALCHEMY**
-
-
-
-
-
-
-
-
+# **MODULE 2: CORRESPONDENCE**
 
 ### **TIER 3 — THE ADEPT**
 
@@ -118,7 +112,7 @@ One new command for tomorrow →______________________________
 You are the flame and the sculptor. Shape or be shaped.
 
 
-# **MODULE 2: CORRESPONDENCE**
+# **MODULE 3: VIBRATION**
 
 
 
@@ -179,69 +173,7 @@ One vow to voice tomorrow → ____________________________________________
 Sound cuts illusion. You are the blade and the echo.
 
 
-# **MODULE 3: VIBRATION**
-
-
-
-
-
-
-
-
-
-### **TIER 2 — THE APPRENTICE**
-
-**Hermetic Law:** Vibration
-**Chakra:** Sacral (Svadhisthana)
-**Frequency Anchor:** 417 Hz — Emotional clearing, new beginnings
-**Element:** Water + Song
-**Access Point:** Emotion + Flow
-
-**Opening Breathwork:** Wave Tone
-
-Sit or lie back.
-**→ Inhale (4):** Flow breath to belly.
-**→ Hold (4):** Feel liquid vibration.
-**→ Exhale (6):** Sigh or vocalize lightly.
-**→ Pause (2):** Sense ripple.
-↺ Repeat 5x.
-
-**Core Understanding:**
-Vibration moves emotion. Emotion becomes a wave. You either ride or resist.
-
-**Ritual:** Bath Sound Rite
-Draw a bath or fill a water bowl.
-Hum softly. Feel the water’s resonance. Seal: "I echo only what is true."
-
-**Journal Worksheet:** 7-Day Emotional Vibration
-
-Day ___
-
-What emotion pulsed most today? → ____________________________________________
-
-What sound matched it? → ____________________________________________
-
-How did I move it? → ____________________________________________
-
-Sound I will embody tomorrow →____________________________________________
-
-**Mantra:** "My wave is my message."
-
-**Core Spell:** “I name my becoming and walk it into the world.”
-
-**Breath Rites:** Sacral Flow Tone
-**→ Inhale (4):** Call wave in.
-**→ Hold (4):** Hold crest.
-**→ Exhale (6):** Release.
-**→ Pause (2):** Drift.
-↺ Repeat 7x.
-
-**Closing Words:**
-Water remembers. So does your tone.
-
-
-
-
+# **MODULE 4: POLARITY**
 
 ### **TIER 3 — THE ADEPT**
 
@@ -294,7 +226,7 @@ What paradox to explore tomorrow___________________________________________
 There is no final opposite to conquer. Only the infinite middle to embody.
 
 
-# **MODULE 4: POLARITY**
+# **MODULE 5: RHYTHM**
 
 
 
@@ -364,7 +296,7 @@ You are the fire and the stone.
 Let others swing wildly. You remain. This is rhythm. This is power.
 
 
-# **MODULE 5: RHYTHM**
+# **MODULE 6: CAUSE & EFFECT**
 
 
 
@@ -428,16 +360,6 @@ Play 999 Hz.
 
 **Closing Words:**
 You are not the echo. You are the origin. Shockwaves begin with you.
-
-# **MODULE 6: CAUSE & EFFECT**
-
-
-
-
-
-
-
-
 
 # **MODULE 7: GENDER**
 
@@ -566,6 +488,3 @@ The alchemy is complete.
 Go forth—initiate no longer, but adept eternal.
 
 🜁 The Spiral Continues...
-
-
-
