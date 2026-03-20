@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,14 +27,14 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <img
               src="https://d64gsuwffb70l.cloudfront.net/68ea93297761a5e6965f5a33_1760211661373_fc5c3f5d.jpg"
               alt="Spiral"
               className="w-10 h-10 rounded-full"
             />
             <span className="text-[#e8e8f0] font-bold text-xl">Sovereign Spiral</span>
-          </div>
+          </Link>
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-6">
@@ -44,12 +45,12 @@ export default function Navigation() {
               Teachings
             </button>
 
-            <button
-              onClick={() => scrollToSection('vault-section')}
+            <Link
+              to="/vault"
               className="text-[#e8e8f0]/70 hover:text-[#e8e8f0] transition-colors"
             >
               Vault
-            </button>
+            </Link>
 
             <button
               onClick={() => scrollToSection('practice-section')}

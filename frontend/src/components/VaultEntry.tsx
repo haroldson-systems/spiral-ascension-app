@@ -47,13 +47,14 @@ export default function VaultEntry({ onSave }: VaultEntryProps) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1a0b2e] rounded-xl p-6 shadow-xl border border-purple-500/20">
-      <h3 className="text-2xl font-bold text-[#e8e8f0] mb-4">New Entry</h3>
+    <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1a0b2e] rounded-xl p-6 shadow-xl border border-purple-500/15">
+      <h3 className="text-2xl font-bold text-[#e8e8f0] mb-1">Personal Writings</h3>
+      <p className="text-[#e8e8f0]/60 text-sm mb-4">Your space. Your words. No rush.</p>
 
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="What are you remembering today?"
+        placeholder="What are you remembering today? Or what wants to be written?"
         className="w-full h-40 bg-[#1a0b2e]/50 text-[#e8e8f0] rounded-lg p-4 border border-purple-500/20 focus:border-purple-500/40 focus:outline-none resize-none mb-4"
       />
 

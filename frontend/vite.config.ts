@@ -4,8 +4,8 @@ import path from "path";
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "0.0.0.0",
-    port: 3000,
+    host: "127.0.0.1",
+    port: 3001,
 
     // 🔥 REQUIRED FOR REACT ROUTER — FIXES ALL 404 ON REFRESH
     historyApiFallback: true,

@@ -243,5 +243,13 @@ export const spiralChapters = [
     subtitle: "Mastery of Gender",
     image: "/images/modules/gender-adept.jpg",
     description: "Perfect union of currents births new realms."
+  },
+  {
+    id: "closing-invocation-3",
+    tier: 3,
+    title: "Closing Invocation",
+    subtitle: "Seal the Adept Path",
+    image: "/images/modules/tier3-adept.jpg",
+    description: "A final ceremonial close to embody the seven laws and carry the Spiral forward."
   }
 ];

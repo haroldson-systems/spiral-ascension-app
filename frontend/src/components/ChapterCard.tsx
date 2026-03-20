@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 interface ChapterCardProps {
@@ -13,7 +13,6 @@ interface ChapterCardProps {
 
 export default function ChapterCard({ chapter }: ChapterCardProps) {
   const navigate = useNavigate();
-  const [hover, setHover] = useState(false);
 
   const displayImage =
     chapter.image && chapter.image.length > 0
@@ -23,7 +22,7 @@ export default function ChapterCard({ chapter }: ChapterCardProps) {
   return (
     <div
       className="bg-gradient-to-br from-[#2d21be] to-[#1a0b2e] rounded-xl overflow-hidden shadow-xl 
-                 border border-purple-500/20 hover:border-purple-500/40 transition-all"
+                 border border-purple-500/20 hover:border-purple-500/40 transition-all h-full flex flex-col"
     >
 
       {/* IMAGE */}
@@ -45,24 +44,16 @@ export default function ChapterCard({ chapter }: ChapterCardProps) {
         <span className="text-[#4d43ff] text-sm font-semibold">Ch. {chapter.id}</span>
       </div>
 
-      {/* DESCRIPTION + BUTTON wrapped in ONE group */}
-      <div className="group mt-auto">
-
-        {/* DESCRIPTION (expands when button is hovered) */}
-        <div className="max-h-12 overflow-hidden transition-all duration-300 group-hover:max-h-40 group-hover:pb-2">
-          <p className="text-sm text-purple-200">
-            {chapter.description}
-          </p>
-        </div>
-
-        {/* BUTTON (hover triggers expand, click navigates) */}
+      <div className="mt-auto p-4 pt-0 space-y-4">
+        <p className="text-sm text-purple-200 line-clamp-3 min-h-[4.5rem]">
+          {chapter.description}
+        </p>
         <button
           onClick={() => navigate(`/module/${chapter.id}`)}
           className="w-full bg-purple-600 text-white font-semibold py-2 rounded-lg
-                     transition-all duration-300 group-hover:bg-purple-500 group-hover:shadow-lg">
+                     transition-colors duration-200 hover:bg-purple-500">
           Enter Module
         </button>
-
       </div>
     </div>
   );

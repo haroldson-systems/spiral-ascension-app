@@ -5,6 +5,7 @@ import { useCyclePreference, useSetCyclePreference, useRecalculateEvents } from 
 import { CycleType } from '../backend';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function CycleToggle() {
   const { data: preference, isLoading } = useCyclePreference();
@@ -12,10 +13,16 @@ export default function CycleToggle() {
   const recalculateMutation = useRecalculateEvents();
 
   const is13Month = preference?.cycleType === CycleType.thirteenMonth;
+  const [checked, setChecked] = useState(is13Month);
   const isProcessing = setCycleMutation.isPending || recalculateMutation.isPending;
+
+  useEffect(() => {
+    setChecked(is13Month);
+  }, [is13Month]);
 
   const handleToggle = async (checked: boolean) => {
     const newCycleType = checked ? CycleType.thirteenMonth : CycleType.twelveMonth;
+    setChecked(checked);
 
     try {
       await setCycleMutation.mutateAsync(newCycleType);
@@ -25,13 +32,14 @@ export default function CycleToggle() {
         { description: 'All lunar phases and events have been recalculated.' }
       );
     } catch {
+      setChecked(!checked);
       toast.error('Failed to switch cycle', { description: 'Please try again.' });
     }
   };
 
   if (isLoading) {
     return (
-      <Card className="border-purple-700/50 bg-purple-900/60">
+      <Card className="border-purple-400/15 bg-[#3a2563]/24">
         <CardContent className="py-8 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-amber-400" />
         </CardContent>
@@ -39,8 +47,8 @@ export default function CycleToggle() {
     );
   }
 
-  return (
-    <Card className="border-purple-700/50 bg-purple-900/60 shadow-lg">
+    return (
+      <Card className="border-purple-400/15 bg-[#3a2563]/24 shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-white">
           <span>Lunar Cycle Type</span>
@@ -51,7 +59,7 @@ export default function CycleToggle() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between space-x-4 p-4 rounded-lg bg-background/50">
+        <div className="flex items-center justify-between space-x-4 p-4 rounded-lg bg-[#4a3277]/22">
           <div className="flex-1">
             <Label htmlFor="cycle-toggle" className="text-base font-medium text-white cursor-pointer">
               {is13Month ? '13-Month Cycle' : '12-Month Cycle'}
@@ -64,7 +72,7 @@ export default function CycleToggle() {
           </div>
           <Switch
             id="cycle-toggle"
-            checked={is13Month}
+            checked={checked}
             onCheckedChange={handleToggle}
             disabled={isProcessing}
             className="data-[state=checked]:bg-amber-500"

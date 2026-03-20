@@ -1,0 +1,12 @@
+{
+  "name": "spiral-ascension-app",
+  "private": true,
+  "scripts": {
+    "backend:dev": "cd backend && .venv/bin/uvicorn server:app --port 8001 --reload",
+    "frontend:dev": "npm --prefix frontend run dev -- --host 127.0.0.1 --port 3001",
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"npm run backend:dev\" \"npm run frontend:dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

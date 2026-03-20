@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Event, CycleType, isThirteenMonth } from '../backend';
+import { fetchCyclePreference, updateCyclePreference, fetchEvents, createEvent, updateEvent, removeEvent, fetchLunarPhases } from '../api';
+import { lunarPhaseFromKey } from '../backend';
 
 const CYCLE_PREFERENCE_KEY = 'moonsync-cycle-preference';
 
@@ -29,7 +31,14 @@ function getDefaultPreference() {
 export function useCyclePreference() {
   return useQuery({
     queryKey: ['moonsync', 'cyclePreference'],
-    queryFn: async () => getDefaultPreference(),
+    queryFn: async () => {
+      try {
+        const cycle = await fetchCyclePreference();
+        return { cycleType: cycle === '13' ? CycleType.thirteenMonth : CycleType.twelveMonth };
+      } catch {
+        return getDefaultPreference();
+      }
+    },
     enabled: true,
   });
 }
@@ -38,10 +47,25 @@ export function useSetCyclePreference() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (cycleType: CycleType) => {
-      setStoredCyclePreference(cycleType);
+      try {
+        await updateCyclePreference(isThirteenMonth(cycleType) ? '13' : '12');
+      } finally {
+        setStoredCyclePreference(cycleType);
+      }
+    },
+    onMutate: async (cycleType) => {
+      await queryClient.cancelQueries({ queryKey: ['moonsync', 'cyclePreference'] });
+      const previous = queryClient.getQueryData<{ cycleType: CycleType }>(['moonsync', 'cyclePreference']);
+      queryClient.setQueryData(['moonsync', 'cyclePreference'], { cycleType });
+      return { previous };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moonsync', 'cyclePreference'] });
+    },
+    onError: (_error, _cycleType, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['moonsync', 'cyclePreference'], context.previous);
+      }
     },
   });
 }
@@ -51,7 +75,17 @@ export function useLunarPhases(cycleType?: CycleType) {
     queryKey: ['moonsync', 'lunarPhases', cycleType],
     queryFn: async () => {
       if (!cycleType) return [];
-      return [];
+      const year = new Date().getFullYear();
+      try {
+        const phases = await fetchLunarPhases(year);
+        return phases.map((phase) => ({
+          phase: lunarPhaseFromKey(phase.phase),
+          startDate: BigInt(phase.startAtMs) * BigInt(1_000_000),
+          endDate: BigInt(phase.endAtMs) * BigInt(1_000_000),
+        }));
+      } catch {
+        return [];
+      }
     },
     enabled: !!cycleType,
     staleTime: 0,
@@ -61,7 +95,13 @@ export function useLunarPhases(cycleType?: CycleType) {
 export function useEvents() {
   return useQuery({
     queryKey: ['moonsync', 'events'],
-    queryFn: async (): Promise<Event[]> => [],
+    queryFn: async (): Promise<Event[]> => {
+      try {
+        return await fetchEvents();
+      } catch {
+        return [];
+      }
+    },
     enabled: true,
   });
 }
@@ -69,7 +109,9 @@ export function useEvents() {
 export function useAddEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_event: Event) => {},
+    mutationFn: async (event: Event) => {
+      await createEvent(event);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moonsync', 'events'] });
     },
@@ -79,7 +121,9 @@ export function useAddEvent() {
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_event: Event) => {},
+    mutationFn: async (event: Event) => {
+      await updateEvent(event);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moonsync', 'events'] });
     },
@@ -89,7 +133,9 @@ export function useUpdateEvent() {
 export function useRemoveEvent() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_eventId: string) => {},
+    mutationFn: async (eventId: string) => {
+      await removeEvent(eventId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moonsync', 'events'] });
     },

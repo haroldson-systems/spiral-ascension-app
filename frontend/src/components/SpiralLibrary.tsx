@@ -1,9 +1,10 @@
 import React from 'react';
 import ChapterCard from './ChapterCard';
-import { spiralChapters } from '../data/spiralChapters';
+import { useSpiralData } from '@/hooks/useSpiralData';
 
 export default function SpiralLibrary() {
-  const libraryChapters = spiralChapters.filter(ch => ch.tier === undefined);
+  const { modules } = useSpiralData();
+  const libraryChapters = modules.filter(ch => ch.tier === undefined);
   return (
     <section id="spiral-section" className="py-20 px-4 bg-gradient-to-b from-[#1a0b2e] to-[#2d1b4e]">
       <div className="max-w-7xl mx-auto">

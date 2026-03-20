@@ -66,7 +66,7 @@ export default function EventList({ events }: EventListProps) {
           {events.map((event) => (
             <div
               key={event.id}
-              className="p-4 rounded-lg border border-purple-700/50 bg-purple-800/40 hover:bg-purple-800/60 transition-colors space-y-3"
+              className="p-4 rounded-lg border border-purple-700/40 bg-[#14002b]/40 hover:bg-[#14002b]/60 transition-colors space-y-3"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 space-y-1">

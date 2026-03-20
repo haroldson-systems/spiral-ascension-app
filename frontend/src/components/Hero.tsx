@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Hero() {
   const scrollToSpiral = () => {
@@ -40,12 +41,12 @@ export default function Hero() {
             Begin the Journey
           </button>
 
-          <button 
-            onClick={() => document.getElementById('vault-section')?.scrollIntoView({ behavior: 'smooth' })}
-            className="px-8 py-4 border-2 border-[#d4af37] text-[#d4af37] rounded-lg font-semibold text-lg hover:bg-[#d4af37]/10 transition-all"
+          <Link
+            to="/vault"
+            className="px-8 py-4 border-2 border-[#d4af37] text-[#d4af37] rounded-lg font-semibold text-lg hover:bg-[#d4af37]/10 transition-all inline-block text-center"
           >
             Open Your Vault
-          </button>
+          </Link>
         </div>
 
         <p className="mt-8 text-[#e8e8f0]/60 text-sm">

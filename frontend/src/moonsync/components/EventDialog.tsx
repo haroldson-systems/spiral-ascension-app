@@ -27,6 +27,7 @@ interface EventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   event?: Event;
+  initialTitle?: string;
 }
 
 const phaseOptions = [
@@ -53,7 +54,7 @@ function eventTypeValue(e: typeof EventType.ritual): string {
   return JSON.stringify(e);
 }
 
-export default function EventDialog({ open, onOpenChange, event }: EventDialogProps) {
+export default function EventDialog({ open, onOpenChange, event, initialTitle }: EventDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventType, setEventType] = useState<typeof EventType.ritual>(EventType.reminder);
@@ -72,13 +73,13 @@ export default function EventDialog({ open, onOpenChange, event }: EventDialogPr
       const eventDate = new Date(Number(event.date / BigInt(1_000_000)));
       setDate(eventDate.toISOString().split('T')[0]);
     } else {
-      setTitle('');
+      setTitle(initialTitle ?? '');
       setDescription('');
       setEventType(EventType.reminder);
       setAssociatedPhase(LunarPhase.newMoon);
       setDate(new Date().toISOString().split('T')[0]);
     }
-  }, [event, open]);
+  }, [event, open, initialTitle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

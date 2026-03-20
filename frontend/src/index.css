@@ -123,10 +123,30 @@
 .markdown-preview h4,
 .markdown-preview h5,
 .markdown-preview h6 {
-  @apply font-sans font-semibold text-foreground;
+  @apply font-sans font-semibold;
 }
 
 .markdown-preview ul,
 .markdown-preview ol {
   @apply my-4 ml-6;
+}
+
+.line-clamp-2,
+.line-clamp-3,
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  -webkit-line-clamp: 3;
+}
+
+.line-clamp-4 {
+  -webkit-line-clamp: 4;
 }

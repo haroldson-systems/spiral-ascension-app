@@ -1,17 +1,92 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import VaultEntry, { JournalEntry } from './VaultEntry';
+import SpiralNotesView from './SpiralNotesView';
+import { fetchVaultEntries, createVaultEntry } from '@/lib/vaultApi';
 
-export default function VaultSection() {
+type VaultMode = 'spiral' | 'personal';
+
+const VAULT_MODE_KEY = 'spiral-ascension-vault-mode';
+
+function getStoredMode(): VaultMode {
+  try {
+    const s = localStorage.getItem(VAULT_MODE_KEY);
+    if (s === 'spiral' || s === 'personal') return s;
+  } catch {}
+  return 'personal';
+}
+
+interface VaultSectionProps {
+  initialMode?: VaultMode;
+}
+
+export default function VaultSection({ initialMode }: VaultSectionProps) {
+  const [mode, setMode] = useState<VaultMode>(() =>
+    initialMode ?? getStoredMode()
+  );
+
+  useEffect(() => {
+    if (initialMode && initialMode !== mode) {
+      setMode(initialMode);
+      try {
+        localStorage.setItem(VAULT_MODE_KEY, initialMode);
+      } catch {}
+    }
+  }, [initialMode]);
+
+  const setModeAndStore = (m: VaultMode) => {
+    setMode(m);
+    try {
+      localStorage.setItem(VAULT_MODE_KEY, m);
+    } catch {}
+  };
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [entriesLoading, setEntriesLoading] = useState(true);
 
-  const handleSaveEntry = (entry: Omit<JournalEntry, 'id' | 'timestamp'>) => {
-    const newEntry: JournalEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      timestamp: new Date()
-    };
-    setEntries([newEntry, ...entries]);
+  const loadEntries = useCallback(async () => {
+    setEntriesLoading(true);
+    try {
+      const data = await fetchVaultEntries();
+      setEntries(
+        data.map((e) => ({
+          id: e.id,
+          content: e.content,
+          tags: Array.isArray(e.tags) ? e.tags : [],
+          timestamp: new Date(e.created_at),
+          type: (e.type as 'text' | 'voice') || 'text',
+        }))
+      );
+    } catch {
+      setEntries([]);
+    } finally {
+      setEntriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'personal') loadEntries();
+  }, [mode, loadEntries]);
+
+  const handleSaveEntry = async (entry: Omit<JournalEntry, 'id' | 'timestamp'>) => {
+    try {
+      const created = await createVaultEntry({
+        content: entry.content,
+        tags: entry.tags,
+        type: entry.type,
+      });
+      setEntries((prev) => [
+        {
+          id: created.id,
+          content: created.content,
+          tags: created.tags,
+          timestamp: new Date(created.created_at),
+          type: (created.type as 'text' | 'voice') || 'text',
+        },
+        ...prev,
+      ]);
+    } catch {
+      /* show error toast if desired */
+    }
   };
 
   const handleExport = () => {
@@ -30,16 +105,45 @@ export default function VaultSection() {
   );
 
   return (
-    <section id="vault-section" className="py-20 px-4 bg-gradient-to-b from-[#2d1b4e] to-[#1a0b2e]">
+    <section id="vault-section" className="pt-20 pb-28 px-4 bg-gradient-to-b from-[#2d1b4e] to-[#1a0b2e]">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
+          <p className="text-amber-400/90 text-sm uppercase tracking-widest mb-3">You&apos;re here</p>
           <h2 className="text-5xl font-bold text-[#e8e8f0] mb-4">The Vault</h2>
-          <p className="text-xl text-[#e8e8f0]/70 max-w-2xl mx-auto mb-6">
-            Your private sanctuary for reflection and integration. Write, voice record, tag by moon phase or Spiral step.
+          <p className="text-xl text-[#e8e8f0]/80 max-w-2xl mx-auto mb-6 leading-relaxed">
+            Your inner sanctuary — a safe place to breathe, reflect, and integrate. No judgment. No rush.
           </p>
-          <p className="text-[#d4af37] font-semibold">Always free. Always yours. Export anytime.</p>
+          {/* Toggle: Spiral Notes | Personal Writings */}
+          <div className="inline-flex rounded-lg border border-purple-500/30 bg-[#2d1b4e]/50 p-1">
+            <button
+              type="button"
+              onClick={() => setModeAndStore('spiral')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'spiral'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-[#e8e8f0]/70 hover:text-[#e8e8f0]'
+              }`}
+            >
+              Spiral Notes
+            </button>
+            <button
+              type="button"
+              onClick={() => setModeAndStore('personal')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                mode === 'personal'
+                  ? 'bg-purple-600 text-white'
+                  : 'text-[#e8e8f0]/70 hover:text-[#e8e8f0]'
+              }`}
+            >
+              Personal Writings
+            </button>
+          </div>
         </div>
 
+        {mode === 'spiral' ? (
+          <SpiralNotesView />
+        ) : (
+          <>
         <VaultEntry onSave={handleSaveEntry} />
 
         <div className="mt-12">
@@ -61,7 +165,9 @@ export default function VaultSection() {
           </div>
 
           <div className="space-y-4">
-            {filteredEntries.length === 0 ? (
+            {entriesLoading ? (
+              <div className="text-center py-12 text-[#e8e8f0]/50">Loading...</div>
+            ) : filteredEntries.length === 0 ? (
               <div className="text-center py-12 text-[#e8e8f0]/50">
                 {entries.length === 0 ? 'Your vault is empty. Begin your journey above.' : 'No entries match your search.'}
               </div>
@@ -88,6 +194,8 @@ export default function VaultSection() {
             )}
           </div>
         </div>
+          </>
+        )}
       </div>
     </section>
   );
