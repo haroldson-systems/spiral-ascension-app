@@ -70,7 +70,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Mental Alchemy — Initiate",
     subtitle: "Principle of Mentalism",
-    image: "/images/modules/mentalism-initiate.jpg",
+    image: "/images/modules/Module 1.jpg",
     description:
       "Mind is the first tool. The Initiate learns to notice thought-forms."
   },
@@ -79,7 +79,7 @@ export const spiralChapters = [
     tier: 1,
     title: "The Mirror — Initiate",
     subtitle: "Principle of Correspondence",
-    image: "/images/modules/correspondence-initiate.jpg",
+    image: "/images/modules/Module 2.jpg",
     description:
       "As above, so below. The Initiate studies reflected layers of reality."
   },
@@ -88,7 +88,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Living Pulse — Initiate",
     subtitle: "Principle of Vibration",
-    image: "/images/modules/vibration-initiate.jpg",
+    image: "/images/modules/Module 3.jpg",
     description:
       "Everything moves. The Initiate attunes to subtle frequency shifts."
   },
@@ -97,7 +97,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Unity of Opposites — Initiate",
     subtitle: "Principle of Polarity",
-    image: "/images/modules/polarity-initiate.jpg",
+    image: "/images/modules/Module 4.jpg",
     description:
       "Dual forces dance. The Initiate learns to transmute swing into balance."
   },
@@ -106,7 +106,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Cosmic Cadence — Initiate",
     subtitle: "Principle of Rhythm",
-    image: "/images/modules/rhythm-initiate.jpg",
+    image: "/images/modules/Module 5.jpg",
     description:
       "Tides within tides. The Initiate rides the inbound and outbound waves."
   },
@@ -115,7 +115,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Chain of Causation — Initiate",
     subtitle: "Principle of Cause & Effect",
-    image: "/images/modules/cause-effect-initiate.jpg",
+    image: "/images/modules/Module 6.jpg",
     description:
       "Nothing happens by chance. The Initiate traces threads back to origin."
   },
@@ -124,7 +124,7 @@ export const spiralChapters = [
     tier: 1,
     title: "Creative Duality — Initiate",
     subtitle: "Principle of Gender",
-    image: "/images/modules/gender-initiate.jpg",
+    image: "/images/modules/Module 7.jpg",
     description:
       "Masculine & feminine currents interweave. The Initiate awakens both."
   },
@@ -135,7 +135,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Mental Alchemy — Apprentice",
     subtitle: "Deepening Mentalism",
-    image: "/images/modules/mentalism-apprentice.jpg",
+    image: "/images/modules/Module 1.jpg",
     description: "The Disciple refines inner dialogue into directed thought."
   },
   {
@@ -143,7 +143,7 @@ export const spiralChapters = [
     tier: 2,
     title: "The Mirror — Apprentice",
     subtitle: "Deepening Correspondence",
-    image: "/images/modules/correspondence-apprentice.jpg",
+    image: "/images/modules/Module 2.jpg",
     description: "Patterns within patterns. The Disciple maps macro ↔ micro shifts."
   },
   {
@@ -151,7 +151,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Living Pulse — Apprentice",
     subtitle: "Deepening Vibration",
-    image: "/images/modules/vibration-apprentice.jpg",
+    image: "/images/modules/Module 3.jpg",
     description: "Frequency mastery begins. The Disciple stabilises inner resonance."
   },
   {
@@ -159,7 +159,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Unity of Opposites — Apprentice",
     subtitle: "Deepening Polarity",
-    image: "/images/modules/polarity-apprentice.jpg",
+    image: "/images/modules/Module 4.jpg",
     description: "The Disciple learns to pivot extremes into harmony."
   },
   {
@@ -167,7 +167,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Cosmic Cadence — Apprentice",
     subtitle: "Deepening Rhythm",
-    image: "/images/modules/rhythm-apprentice.jpg",
+    image: "/images/modules/Module 5.jpg",
     description: "Tides become teachers. The Disciple times action to universal swing."
   },
   {
@@ -175,7 +175,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Chain of Causation — Apprentice",
     subtitle: "Deepening Cause & Effect",
-    image: "/images/modules/cause-effect-apprentice.jpg",
+    image: "/images/modules/Module 6.jpg",
     description: "Seeing the links before they form. The Disciple anticipates outcomes."
   },
   {
@@ -183,7 +183,7 @@ export const spiralChapters = [
     tier: 2,
     title: "Creative Duality — Apprentice",
     subtitle: "Deepening Gender",
-    image: "/images/modules/gender-apprentice.jpg",
+    image: "/images/modules/Module 7.jpg",
     description: "Balanced currents shape reality. The Disciple weaves masculine/feminine flow."
   },
 
@@ -193,7 +193,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Mental Alchemy — Adept",
     subtitle: "Mastery of Mentalism",
-    image: "/images/modules/mentalism-adept.jpg",
+    image: "/images/modules/Module 1.jpg",
     description: "Mind mirrors the infinite; thought crystallises instantly."
   },
   {
@@ -201,7 +201,7 @@ export const spiralChapters = [
     tier: 3,
     title: "The Mirror — Adept",
     subtitle: "Mastery of Correspondence",
-    image: "/images/modules/correspondence-adept.jpg",
+    image: "/images/modules/Module 2.jpg",
     description: "Seamless shift between planes. The Adept navigates reflections at will."
   },
   {
@@ -209,7 +209,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Living Pulse — Adept",
     subtitle: "Mastery of Vibration",
-    image: "/images/modules/vibration-adept.jpg",
+    image: "/images/modules/Module 3.jpg",
     description: "Frequency becomes instrument. The Adept tunes worlds like strings."
   },
   {
@@ -217,7 +217,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Unity of Opposites — Adept",
     subtitle: "Mastery of Polarity",
-    image: "/images/modules/polarity-adept.jpg",
+    image: "/images/modules/Module 4.jpg",
     description: "Duality collapses into singular force; creation through contrast."
   },
   {
@@ -225,7 +225,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Cosmic Cadence — Adept",
     subtitle: "Mastery of Rhythm",
-    image: "/images/modules/rhythm-adept.jpg",
+    image: "/images/modules/Module 5.jpg",
     description: "Rider of cycles; the Adept sets tempo for events to unfold."
   },
   {
@@ -233,7 +233,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Chain of Causation — Adept",
     subtitle: "Mastery of Cause & Effect",
-    image: "/images/modules/cause-effect-adept.jpg",
+    image: "/images/modules/Module 6.jpg",
     description: "Cause is chosen, effect obeys. The Adept authors consequence."
   },
   {
@@ -241,7 +241,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Creative Duality — Adept",
     subtitle: "Mastery of Gender",
-    image: "/images/modules/gender-adept.jpg",
+    image: "/images/modules/Module 7.jpg",
     description: "Perfect union of currents births new realms."
   },
   {
