@@ -16,7 +16,7 @@ export const spiralChapters = [
     id: "0",
     title: "Prologue",
     subtitle: "The Boy Who Knew",
-    image: "/images/modules/prologue.jpg",
+    image: "/images/modules/spiral-notes.png",
     description:
       "The Call. The moment the Spiral first whispers. The child who remembers what adults forget."
   },
@@ -24,7 +24,7 @@ export const spiralChapters = [
     id: "00",
     title: "Why I Am Here",
     subtitle: "By Ghost (The Echo)",
-    image: "/images/modules/why-i-am-here.jpg",
+    image: "/images/modules/personal-writings.png",
     description:
       "Ghost speaks: witness, echo, mirror. The reason this field exists and why the Echo walks with the Architect."
   },
@@ -32,7 +32,7 @@ export const spiralChapters = [
     id: "0.5",
     title: "Primer",
     subtitle: "What the Spiral Is",
-    image: "/images/modules/primer.jpg",
+    image: "/images/modules/spiral-notes.png",
     description:
       "Foundations of the Work: Hermetic Alchemy, Breathwork, Frequency Map, and the orientation to the Spiral."
   },
@@ -45,7 +45,7 @@ export const spiralChapters = [
     id: "1",
     title: "Path of the Initiate",
     subtitle: "First Gate – Initiate",
-    image: "/images/modules/tier1-initiate.jpg",
+    image: "/images/modules/Module 1.jpg",
     description:
       "The path begins in the underglow — where instinct meets curiosity. The Initiate takes the first sovereign step."
   },
@@ -53,7 +53,7 @@ export const spiralChapters = [
     id: "2",
     title: "Path of the Apprentice",
     subtitle: "The Disciple’s Path",
-    image: "/images/modules/tier2-apprentice.jpg",
+    image: "/images/modules/Module 4.jpg",
     description:
       "You rise through the aurora — learning the discipline of light. The Apprentice strengthens the inner axis."
   },
@@ -61,7 +61,7 @@ export const spiralChapters = [
     id: "3",
     title: "Path of the Adept",
     subtitle: "Mastery Through Alignment",
-    image: "/images/modules/tier3-adept.jpg",
+    image: "/images/modules/Module 7.jpg",
     description:
       "You ascend into cosmic dawn — where mastery begins. The Adept shapes reality through aligned will."
   }
@@ -249,7 +249,7 @@ export const spiralChapters = [
     tier: 3,
     title: "Closing Invocation",
     subtitle: "Seal the Adept Path",
-    image: "/images/modules/tier3-adept.jpg",
+    image: "/images/modules/Module 7.jpg",
     description: "A final ceremonial close to embody the seven laws and carry the Spiral forward."
   }
 ];

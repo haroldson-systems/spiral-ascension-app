@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { marked } from "marked";
-import { spiralChapters } from "../data/spiralChapters";
 import { spiralIntroContent } from "../data/spiralIntroContent";
 import TierGrid from "../components/TierGrid";
+import { useSpiralData } from "@/hooks/useSpiralData";
 
 function formatChapterParagraphs(description: string) {
   return description
@@ -16,14 +16,14 @@ function formatChapterParagraphs(description: string) {
 export default function ModulePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { modules } = useSpiralData();
 
   // ⬇️ scroll to top whenever this page mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Find the matching chapter (string compare, correct for your string IDs)
-  const chapter = spiralChapters.find((chap) => chap.id === id);
+  const chapter = modules.find((chap) => chap.id === id);
 
   if (!chapter) {
     return (

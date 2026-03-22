@@ -1,5 +1,6 @@
 import type { SpiralModule } from '@/data/spiralChapters';
 import { spiralSpecialLessons } from '@/data/spiralSpecialLessons';
+import { getSpiralLessonContent } from '@/lib/spiralLessons';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
@@ -133,6 +134,12 @@ export async function fetchLessonContent(
     if (fromApi?.markdown) return fromApi;
   } catch {
     // API failed, try static file from public
+  }
+
+  // Bundled fallback: use the markdown imported into the frontend build.
+  const bundledLesson = getSpiralLessonContent(moduleId, tier);
+  if (bundledLesson) {
+    return bundledLesson;
   }
 
   // Fallback: fetch from public/lessons_formatted
