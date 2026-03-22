@@ -55,9 +55,9 @@ function normalizeLessonMarkdown(content: string) {
 }
 
 function extractModuleSection(content: string, moduleNumber: number) {
-  // Match MODULE N section until next MODULE or end of string (?!.) = end of string in JS
+  // Match MODULE N section until next MODULE header or end of file.
   const sectionPattern = new RegExp(
-    `^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)[\\s\\S]*?(?=^#\\s+\\*\\*MODULE\\s+\\d+(?:\\s+—|:)|(?!.))`,
+    `^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)[\\s\\S]*?(?=^#\\s+\\*\\*MODULE\\s+\\d+(?:\\s+—|:)|$)`,
     'm'
   );
 
