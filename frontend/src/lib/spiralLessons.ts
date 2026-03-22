@@ -55,13 +55,23 @@ function normalizeLessonMarkdown(content: string) {
 }
 
 function extractModuleSection(content: string, moduleNumber: number) {
-  // Match MODULE N section until next MODULE header or end of file.
-  const sectionPattern = new RegExp(
-    `^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)[\\s\\S]*?(?=^#\\s+\\*\\*MODULE\\s+\\d+(?:\\s+—|:)|$)`,
+  const startPattern = new RegExp(
+    `^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)`,
     'm'
   );
+  const startMatch = startPattern.exec(content);
+  if (!startMatch || startMatch.index === undefined) {
+    return null;
+  }
 
-  return content.match(sectionPattern)?.[0]?.trim() ?? null;
+  const startIndex = startMatch.index;
+  const remaining = content.slice(startIndex + startMatch[0].length);
+  const nextHeaderMatch = /\n#\s+\*\*MODULE\s+\d+(?:\s+—|:)/.exec(remaining);
+  const endIndex = nextHeaderMatch
+    ? startIndex + startMatch[0].length + nextHeaderMatch.index
+    : content.length;
+
+  return content.slice(startIndex, endIndex).trim();
 }
 
 export interface SpiralLessonContent {
