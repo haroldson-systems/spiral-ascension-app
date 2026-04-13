@@ -110,7 +110,7 @@ const App = () => (
 
               <Route path="/admin" element={<AdminPractices />} />
 
-              <Route path="/" element={<AppAccessGate><Index /></AppAccessGate>} />
+              <Route path="/" element={<Index />} />
 
               {/* MoonSync full tracker */}
               <Route path="/moonsync" element={<AppAccessGate><MoonSyncTrackerPage /></AppAccessGate>} />
