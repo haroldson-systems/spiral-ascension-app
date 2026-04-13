@@ -74,17 +74,7 @@ function MaintenanceGate({ children }: { children: ReactNode }) {
     return <MaintenancePage />;
   }
 
-  if (siteSettingsQuery.isPending) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#12081f] via-[#24123f] to-[#12081f] text-white">
-        <main className="mx-auto flex min-h-screen max-w-4xl items-center justify-center px-6 py-16 text-center">
-          <p className="text-sm uppercase tracking-[0.3em] text-purple-300">Checking access...</p>
-        </main>
-      </div>
-    );
-  }
-
-  if (!maintenanceModeEnabled || siteSettingsQuery.isError) {
+  if (siteSettingsQuery.isPending || siteSettingsQuery.isError || !maintenanceModeEnabled) {
     return <>{children}</>;
   }
 
