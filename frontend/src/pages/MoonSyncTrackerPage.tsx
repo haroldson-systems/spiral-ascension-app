@@ -5,6 +5,7 @@ import LunarDisplay from '@/moonsync/components/LunarDisplay';
 import EventManager from '@/moonsync/components/EventManager';
 import { useCyclePreference } from '@/moonsync/hooks/useQueries';
 import { isThirteenMonth } from '@/moonsync/backend';
+import { homeSectionHref } from '@/lib/homeNavigation';
 
 const harmonicCopy = {
   title: 'MoonSync — 13-Month Harmonic Cycle',
@@ -28,11 +29,11 @@ export default function MoonSyncTrackerPage() {
       <header className="border-b border-purple-400/15 bg-[#3a2563]/24">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl">
           <Link
-            to="/"
+            to={homeSectionHref('moonsync')}
             className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            Back to Spiral Ascension
+            Back to MoonSync
           </Link>
           <div className="flex items-center gap-2">
             <Moon className="h-8 w-8 text-amber-400" />
@@ -78,6 +79,16 @@ export default function MoonSyncTrackerPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LunarDisplay />
             <EventManager />
+          </div>
+
+          <div className="flex justify-center pt-2">
+            <Link
+              to={homeSectionHref('moonsync')}
+              className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Back to MoonSync
+            </Link>
           </div>
         </div>
       </main>

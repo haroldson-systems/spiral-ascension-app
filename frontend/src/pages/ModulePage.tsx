@@ -4,6 +4,7 @@ import { marked } from "marked";
 import { spiralIntroContent } from "../data/spiralIntroContent";
 import TierGrid from "../components/TierGrid";
 import { useSpiralData } from "@/hooks/useSpiralData";
+import { homeSectionHref } from "@/lib/homeNavigation";
 
 function formatChapterParagraphs(description: string) {
   return description
@@ -52,8 +53,7 @@ export default function ModulePage() {
         {/* BACK BUTTON */}
         <button
           onClick={() =>
-            // if a history entry exists, go back; otherwise jump to the home grid
-            window.history.length > 1 ? navigate(-1) : navigate("/")
+            navigate(homeSectionHref('spiral'))
           }
           className="mb-6 px-4 py-2 bg-purple-600/30 hover:bg-purple-600/50 rounded-lg"
         >
@@ -101,6 +101,15 @@ export default function ModulePage() {
         {chapter.id === "1" && <TierGrid tier={1} />}
         {chapter.id === "2" && <TierGrid tier={2} />}
         {chapter.id === "3" && <TierGrid tier={3} />}
+
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={() => navigate(homeSectionHref('spiral'))}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+          >
+            ← Back to Teachings
+          </button>
+        </div>
       </div>
     </div>
   );

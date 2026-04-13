@@ -4,6 +4,40 @@ import { getSpiralLessonContent } from '@/lib/spiralLessons';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
+const DEFAULT_FETCH_TIMEOUT_MS = 25_000;
+
+/** Abortable fetch with a wall-clock timeout so hung requests do not block UI forever. */
+function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  const { signal: userSignal, ...rest } = init;
+
+  if (userSignal) {
+    if (userSignal.aborted) {
+      clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      userSignal.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timeoutId);
+          controller.abort();
+        },
+        { once: true }
+      );
+    }
+  }
+
+  return fetch(input, { ...rest, signal: controller.signal }).finally(() =>
+    clearTimeout(timeoutId)
+  );
+}
+
 function getAdminToken(): string | null {
   try {
     return localStorage.getItem('adminToken');
@@ -23,7 +57,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers.set('x-admin-token', token);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetchWithTimeout(`${API_BASE}${path}`, {
     ...options,
     headers,
   });
@@ -104,12 +138,17 @@ function normalizeLessonMarkdown(content: string): string {
 }
 
 function extractModuleSection(content: string, moduleNumber: number): string | null {
-  const pattern = new RegExp(
-    `^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)[\\s\\S]*?(?=^#\\s+\\*\\*MODULE\\s+\\d+(?:\\s+—|:)|(?!.))`,
-    'm'
-  );
-  const m = content.match(pattern);
-  return m ? m[0].trim() : null;
+  const startRe = new RegExp(`^#\\s+\\*\\*MODULE\\s+${moduleNumber}(?:\\s+—|:)`, 'm');
+  const startMatch = content.match(startRe);
+  if (!startMatch || startMatch.index === undefined) return null;
+
+  const sliceStart = startMatch.index;
+  const afterStart = sliceStart + startMatch[0].length;
+  const nextRe = /\n#\s+\*\*MODULE\s+\d+(?:\s+—|:)/g;
+  nextRe.lastIndex = afterStart;
+  const nextMatch = nextRe.exec(content);
+  const sliceEnd = nextMatch ? nextMatch.index : content.length;
+  return content.slice(sliceStart, sliceEnd).trim();
 }
 
 export async function fetchLessonContent(
@@ -144,7 +183,7 @@ export async function fetchLessonContent(
 
   // Fallback: fetch from public/lessons_formatted
   try {
-    const res = await fetch(`/lessons_formatted/${fileName}`);
+    const res = await fetchWithTimeout(`/lessons_formatted/${fileName}`);
     if (!res.ok) throw new Error('Fetch failed');
     const content = await res.text();
     const normalized = normalizeLessonMarkdown(content);

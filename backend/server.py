@@ -4,12 +4,15 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
+import requests
+import stripe
+from stripe.error import SignatureVerificationError
 
 
 ROOT_DIR = Path(__file__).parent
@@ -18,6 +21,12 @@ load_dotenv(ROOT_DIR / '.env')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+STRIPE_PRICE_ID = os.environ.get('STRIPE_PRICE_ID')
+STRIPE_PRODUCT_ID = os.environ.get('STRIPE_PRODUCT_ID')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
+STRIPE_TRIAL_DAYS = int(os.environ.get('STRIPE_TRIAL_DAYS', '7'))
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
     raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
@@ -41,6 +50,9 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+SITE_SETTINGS_STATE = {
+    "maintenanceMode": False,
+}
 
 
 # Define Models
@@ -84,6 +96,11 @@ class PracticeVariant(BaseModel):
     tags: Optional[List[str]] = None
     mediaUrl: Optional[str] = None
     audioUrl: Optional[str] = None
+    mediaType: Optional[str] = None
+    supportState: Optional[str] = None
+    frequency: Optional[str] = None
+    credit: Optional[str] = None
+    sourceUrl: Optional[str] = None
 
 class SpiralModule(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -104,6 +121,56 @@ class MoonSyncSettings(BaseModel):
     cycleMode: int = 12
     timezone: Optional[str] = None
     anchorDate: Optional[str] = None
+
+
+class SiteSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    maintenanceMode: bool = False
+
+
+class StripeCheckoutSessionRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    email: Optional[str] = None
+    successUrl: str
+    cancelUrl: str
+
+
+class StripeCheckoutSessionResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    sessionId: str
+    url: str
+
+
+class CheckoutSessionCreate(BaseModel):
+    email: EmailStr
+    successUrl: Optional[str] = None
+    cancelUrl: Optional[str] = None
+
+
+class CheckoutSessionResponse(BaseModel):
+    url: str
+    sessionId: str
+
+
+class CheckoutSessionSummary(BaseModel):
+    sessionId: str
+    status: Optional[str] = None
+    paymentStatus: Optional[str] = None
+    customerEmail: Optional[str] = None
+    customerId: Optional[str] = None
+    subscriptionId: Optional[str] = None
+
+
+class PortalSessionCreate(BaseModel):
+    checkoutSessionId: str
+    returnUrl: Optional[str] = None
+
+
+class PortalSessionResponse(BaseModel):
+    url: str
 
 
 class MoonSyncEventIn(BaseModel):
@@ -214,6 +281,332 @@ def require_admin(request: Request) -> None:
     token = request.headers.get('x-admin-token')
     if token != ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def require_stripe() -> None:
+    if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
+        raise HTTPException(status_code=500, detail="Stripe is not configured")
+
+
+def get_frontend_base_url(request: Request) -> str:
+    origin = request.headers.get("origin")
+    if origin and origin.startswith("http"):
+        return origin.rstrip("/")
+    if FRONTEND_URL:
+        return FRONTEND_URL.rstrip("/")
+    referer = request.headers.get("referer")
+    if referer and referer.startswith("http"):
+        return referer.split("/api", 1)[0].rstrip("/")
+    return "http://localhost:5173"
+
+
+def ensure_stripe_configured() -> None:
+    if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+    stripe.api_key = STRIPE_SECRET_KEY
+
+
+def ensure_stripe_webhook_configured() -> None:
+    if not STRIPE_SECRET_KEY or not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Stripe webhook is not configured")
+    stripe.api_key = STRIPE_SECRET_KEY
+
+
+def iso_from_stripe_timestamp(value) -> Optional[str]:
+    if value is None:
+        return None
+    try:
+        ts = int(value)
+    except (TypeError, ValueError):
+        return None
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
+
+
+def upsert_billing_subscription(doc: dict) -> None:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    row = {**doc, "updated_at": now_iso}
+    get_data(
+        supabase.table("billing_subscriptions")
+        .upsert(row, on_conflict="stripe_subscription_id")
+        .execute()
+    )
+
+
+def _subscription_metadata_as_dict(metadata) -> dict:
+    if not metadata:
+        return {}
+    if isinstance(metadata, dict):
+        return dict(metadata)
+    try:
+        return dict(metadata)
+    except (TypeError, ValueError):
+        return {}
+
+
+def build_billing_subscription_doc(
+    subscription,
+    customer_email: Optional[str] = None,
+    checkout_session_id: Optional[str] = None,
+) -> dict:
+    price_id = None
+    product_id = None
+    items = getattr(subscription, "items", None)
+    item_list = getattr(items, "data", None) if items is not None else None
+    if item_list and len(item_list) > 0:
+        price = getattr(item_list[0], "price", None)
+        if price is not None:
+            if isinstance(price, str):
+                price_id = price
+            else:
+                price_id = getattr(price, "id", None)
+                product_id = extract_stripe_id(getattr(price, "product", None))
+
+    doc = {
+        "stripe_subscription_id": getattr(subscription, "id", None),
+        "stripe_customer_id": extract_stripe_id(getattr(subscription, "customer", None)),
+        "stripe_price_id": price_id,
+        "stripe_product_id": product_id,
+        "status": getattr(subscription, "status", None) or "incomplete",
+        "cancel_at_period_end": bool(getattr(subscription, "cancel_at_period_end", False)),
+        "trial_end": iso_from_stripe_timestamp(getattr(subscription, "trial_end", None)),
+        "current_period_end": iso_from_stripe_timestamp(
+            getattr(subscription, "current_period_end", None)
+        ),
+        "metadata": _subscription_metadata_as_dict(getattr(subscription, "metadata", None)),
+    }
+    if customer_email is not None:
+        doc["customer_email"] = customer_email
+    if checkout_session_id is not None:
+        doc["checkout_session_id"] = checkout_session_id
+    return doc
+
+
+def extract_stripe_id(value) -> Optional[str]:
+    if not value:
+        return None
+    if isinstance(value, str):
+        return value
+    return getattr(value, "id", None)
+
+
+@api_router.get("/site-settings", response_model=SiteSettings)
+async def get_site_settings():
+    return SiteSettings(**SITE_SETTINGS_STATE)
+
+
+@api_router.post("/site-settings", response_model=SiteSettings)
+async def update_site_settings(payload: SiteSettings, request: Request):
+    require_admin(request)
+    SITE_SETTINGS_STATE["maintenanceMode"] = payload.maintenanceMode
+    return SiteSettings(**SITE_SETTINGS_STATE)
+
+
+@api_router.post('/stripe/checkout-session', response_model=StripeCheckoutSessionResponse)
+async def create_stripe_checkout_session(payload: StripeCheckoutSessionRequest):
+    require_stripe()
+    form_data = {
+        "mode": "subscription",
+        "success_url": payload.successUrl,
+        "cancel_url": payload.cancelUrl,
+        "payment_method_collection": "always",
+        "billing_address_collection": "auto",
+        "line_items[0][price]": STRIPE_PRICE_ID,
+        "line_items[0][quantity]": "1",
+        "subscription_data[trial_period_days]": "7",
+        "subscription_data[metadata][product_id]": STRIPE_PRODUCT_ID or "",
+    }
+    if payload.email and payload.email.strip():
+        form_data["customer_email"] = payload.email.strip()
+
+    headers = {"Authorization": f"Bearer {STRIPE_SECRET_KEY}"}
+
+    try:
+        stripe_response = requests.post(
+            "https://api.stripe.com/v1/checkout/sessions",
+            headers=headers,
+            data=form_data,
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Stripe checkout request failed: {exc}",
+        ) from exc
+
+    if not stripe_response.ok:
+        detail = stripe_response.text or "Stripe returned an error"
+        try:
+            err_body = stripe_response.json()
+            err_obj = err_body.get("error")
+            if isinstance(err_obj, dict) and err_obj.get("message"):
+                detail = err_obj["message"]
+            elif isinstance(err_obj, str):
+                detail = err_obj
+        except (ValueError, TypeError):
+            pass
+        raise HTTPException(status_code=502, detail=detail)
+
+    try:
+        session_json = stripe_response.json()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail="Stripe returned invalid JSON",
+        ) from exc
+
+    session_id = session_json.get("id")
+    session_url = session_json.get("url")
+    if not session_id or not session_url:
+        raise HTTPException(
+            status_code=502,
+            detail="Stripe response missing session id or url",
+        )
+
+    return StripeCheckoutSessionResponse(sessionId=session_id, url=session_url)
+
+
+@api_router.post("/billing/checkout-session", response_model=CheckoutSessionResponse)
+async def create_checkout_session(payload: CheckoutSessionCreate, request: Request):
+    ensure_stripe_configured()
+    base_url = get_frontend_base_url(request)
+    success_url = payload.successUrl or f"{base_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
+    cancel_url = payload.cancelUrl or f"{base_url}/billing/cancel"
+
+    try:
+        session = stripe.checkout.Session.create(
+            mode="subscription",
+            line_items=[
+                {
+                    "price": STRIPE_PRICE_ID,
+                    "quantity": 1,
+                }
+            ],
+            customer_email=payload.email,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            allow_promotion_codes=True,
+            billing_address_collection="auto",
+            subscription_data={
+                "trial_period_days": STRIPE_TRIAL_DAYS,
+            },
+            metadata={
+                "product_id": STRIPE_PRODUCT_ID or "",
+            },
+        )
+    except Exception as exc:
+        logger.exception("Failed to create Stripe checkout session")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    if not session.url:
+        raise HTTPException(status_code=500, detail="Stripe checkout session did not return a URL")
+
+    return CheckoutSessionResponse(url=session.url, sessionId=session.id)
+
+
+@api_router.get("/billing/checkout-session/{session_id}", response_model=CheckoutSessionSummary)
+async def get_checkout_session(session_id: str):
+    ensure_stripe_configured()
+    try:
+        session = stripe.checkout.Session.retrieve(
+            session_id,
+            expand=["customer", "subscription"],
+        )
+    except Exception as exc:
+        logger.exception("Failed to retrieve Stripe checkout session")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return CheckoutSessionSummary(
+        sessionId=session.id,
+        status=getattr(session, "status", None),
+        paymentStatus=getattr(session, "payment_status", None),
+        customerEmail=getattr(session, "customer_email", None),
+        customerId=extract_stripe_id(getattr(session, "customer", None)),
+        subscriptionId=extract_stripe_id(getattr(session, "subscription", None)),
+    )
+
+
+@api_router.post("/billing/portal-session", response_model=PortalSessionResponse)
+async def create_portal_session(payload: PortalSessionCreate, request: Request):
+    ensure_stripe_configured()
+    base_url = get_frontend_base_url(request)
+    return_url = payload.returnUrl or f"{base_url}/"
+
+    try:
+        checkout_session = stripe.checkout.Session.retrieve(
+            payload.checkoutSessionId,
+            expand=["customer"],
+        )
+        customer_id = extract_stripe_id(getattr(checkout_session, "customer", None))
+        if not customer_id:
+            raise HTTPException(status_code=400, detail="Checkout session has no customer")
+
+        portal_session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url=return_url,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to create Stripe billing portal session")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return PortalSessionResponse(url=portal_session.url)
+
+
+@api_router.post("/billing/webhook")
+async def billing_webhook(request: Request):
+    ensure_stripe_webhook_configured()
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    if not sig_header:
+        raise HTTPException(status_code=400, detail="Missing stripe-signature header")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    event_type = event["type"]
+    data_object = event["data"]["object"]
+
+    if event_type == "checkout.session.completed":
+        mode = getattr(data_object, "mode", None)
+        subscription_id = extract_stripe_id(getattr(data_object, "subscription", None))
+        if mode == "subscription" and subscription_id:
+            customer_details = getattr(data_object, "customer_details", None)
+            session_email = (
+                getattr(customer_details, "email", None) if customer_details else None
+            )
+            if not session_email:
+                session_email = getattr(data_object, "customer_email", None)
+            checkout_session_id = getattr(data_object, "id", None)
+            subscription = stripe.Subscription.retrieve(
+                subscription_id,
+                expand=["items.data.price"],
+            )
+            doc = build_billing_subscription_doc(
+                subscription,
+                customer_email=session_email,
+                checkout_session_id=checkout_session_id,
+            )
+            if doc.get("stripe_subscription_id"):
+                upsert_billing_subscription(doc)
+
+    elif event_type in (
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    ):
+        doc = build_billing_subscription_doc(data_object)
+        if doc.get("stripe_subscription_id"):
+            upsert_billing_subscription(doc)
+
+    return {"received": True, "eventType": event_type}
+
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")

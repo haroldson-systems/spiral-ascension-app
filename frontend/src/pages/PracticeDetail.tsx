@@ -2,6 +2,19 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
+import { homeSectionHref } from '@/lib/homeNavigation';
+
+function getCollectionHeading(practiceId: string) {
+  if (practiceId === 'breathwork-compendium') {
+    return 'Choose your lane';
+  }
+
+  if (practiceId === 'resonance-gate') {
+    return 'Choose your chamber';
+  }
+
+  return 'Choose your depth';
+}
 
 export default function PracticeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +28,11 @@ export default function PracticeDetail() {
           <h1 className="text-3xl font-bold">Practice not found</h1>
           <p className="text-purple-200">This practice may have moved or is not yet available.</p>
           <Link
-            to="/"
+            to={homeSectionHref('practices')}
             className="inline-flex items-center gap-2 text-amber-300 hover:text-amber-200"
           >
             <ArrowLeft className="h-5 w-5" />
-            Return to Spiral Ascension
+            Return to Practices
           </Link>
         </div>
       </div>
@@ -41,11 +54,11 @@ export default function PracticeDetail() {
       <header className="border-b border-purple-700/50 bg-purple-900/40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-6xl">
           <Link
-            to="/"
+            to={homeSectionHref('practices')}
             className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            Back to Spiral Ascension
+            Back to Practices
           </Link>
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-400" />
@@ -84,7 +97,7 @@ export default function PracticeDetail() {
 
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-white">Choose your depth</h2>
+            <h2 className="text-2xl font-semibold text-white">{getCollectionHeading(practice.id)}</h2>
             <span className="text-sm text-purple-300">
               {practiceVariants.length > 0 ? `${practiceVariants.length} available` : 'Variants coming soon'}
             </span>
@@ -116,6 +129,16 @@ export default function PracticeDetail() {
             </div>
           )}
         </section>
+
+        <div className="flex justify-center pt-2">
+          <Link
+            to={homeSectionHref('practices')}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Practices
+          </Link>
+        </div>
       </main>
     </div>
   );

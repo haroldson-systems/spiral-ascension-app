@@ -3,7 +3,9 @@ import { Practice, PracticeVariant, practices as fallbackPractices, practiceVari
 import { SpiralModule, spiralChapters as fallbackModules } from '@/data/spiralChapters';
 import { bulkUpsertPractices, bulkUpsertPracticeVariants, deletePractice, deletePracticeVariant, upsertPractice, upsertPracticeVariant } from '@/lib/practicesApi';
 import { bulkUpsertSpiralModules, deleteSpiralModule, upsertSpiralModule } from '@/lib/spiralApi';
+import { updateSiteSettings } from '@/lib/siteSettingsApi';
 import { usePracticesData } from '@/hooks/usePracticesData';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useSpiralData } from '@/hooks/useSpiralData';
 
 const emptyPractice: Practice = {
@@ -33,6 +35,11 @@ const emptyVariant: PracticeVariant = {
   tags: [],
   mediaUrl: '',
   audioUrl: '',
+  mediaType: undefined,
+  supportState: '',
+  frequency: '',
+  credit: '',
+  sourceUrl: '',
 };
 
 const emptyModule: SpiralModule = {
@@ -49,6 +56,7 @@ const emptyModule: SpiralModule = {
 export default function AdminPractices() {
   const { practices, variants, refetchPractices, refetchVariants } = usePracticesData();
   const { modules, refetchModules } = useSpiralData();
+  const siteSettingsQuery = useSiteSettings();
   const [selectedPracticeId, setSelectedPracticeId] = useState<string | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [practiceForm, setPracticeForm] = useState<Practice>(emptyPractice);
@@ -56,6 +64,7 @@ export default function AdminPractices() {
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [moduleForm, setModuleForm] = useState<SpiralModule>(emptyModule);
   const [adminToken, setAdminToken] = useState('');
+  const [isUpdatingMaintenance, setIsUpdatingMaintenance] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -119,6 +128,20 @@ export default function AdminPractices() {
     }
   };
 
+  const handleToggleMaintenance = async () => {
+    try {
+      setIsUpdatingMaintenance(true);
+      const nextValue = !siteSettingsQuery.data?.maintenanceMode;
+      await updateSiteSettings({ maintenanceMode: nextValue });
+      await siteSettingsQuery.refetch();
+      setStatus(nextValue ? 'Maintenance mode enabled.' : 'Maintenance mode disabled.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to update maintenance mode.');
+    } finally {
+      setIsUpdatingMaintenance(false);
+    }
+  };
+
   const handleSavePractice = async () => {
     if (!practiceForm.id || !practiceForm.title) {
       setStatus('Practice requires an id and title.');
@@ -156,6 +179,11 @@ export default function AdminPractices() {
       externalUrl: variantForm.externalUrl?.trim() || undefined,
       mediaUrl: variantForm.mediaUrl?.trim() || undefined,
       audioUrl: variantForm.audioUrl?.trim() || undefined,
+      mediaType: variantForm.mediaType?.trim() || undefined,
+      supportState: variantForm.supportState?.trim() || undefined,
+      frequency: variantForm.frequency?.trim() || undefined,
+      credit: variantForm.credit?.trim() || undefined,
+      sourceUrl: variantForm.sourceUrl?.trim() || undefined,
       tags: variantForm.tags && variantForm.tags.length > 0 ? variantForm.tags : undefined,
     };
     await upsertPracticeVariant(payload);
@@ -242,6 +270,42 @@ export default function AdminPractices() {
             >
               Seed Defaults
             </button>
+          </div>
+          <div className="rounded-xl border border-purple-700/40 bg-purple-900/40 p-4 space-y-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-white">Site Access</h3>
+                <p className="text-sm text-purple-200">
+                  Public visitors will see the maintenance page while <code>/admin</code> stays open.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    siteSettingsQuery.data?.maintenanceMode
+                      ? 'bg-amber-500/20 text-amber-200'
+                      : 'bg-emerald-500/20 text-emerald-200'
+                  }`}
+                >
+                  {siteSettingsQuery.data?.maintenanceMode ? 'Maintenance On' : 'Site Live'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleMaintenance}
+                  disabled={isUpdatingMaintenance || siteSettingsQuery.isPending}
+                  className="px-4 py-2 rounded-lg bg-purple-700 text-white font-semibold hover:bg-purple-600 disabled:opacity-60"
+                >
+                  {isUpdatingMaintenance
+                    ? 'Saving...'
+                    : siteSettingsQuery.data?.maintenanceMode
+                      ? 'Turn Off Maintenance'
+                      : 'Turn On Maintenance'}
+                </button>
+              </div>
+            </div>
+            {siteSettingsQuery.isError && (
+              <p className="text-sm text-amber-200">Site access controls are currently unavailable.</p>
+            )}
           </div>
           {statusMessage && <p className="text-sm text-amber-200">{statusMessage}</p>}
         </section>
@@ -466,11 +530,52 @@ export default function AdminPractices() {
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
                       />
                     </label>
+                    <label className="text-sm text-purple-200">
+                      Media Type
+                      <input
+                        value={variantForm.mediaType ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, mediaType: event.target.value })}
+                        placeholder="video or audio"
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200">
+                      Frequency
+                      <input
+                        value={variantForm.frequency ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, frequency: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200 md:col-span-2">
+                      Support State
+                      <input
+                        value={variantForm.supportState ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, supportState: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
                     <label className="text-sm text-purple-200 md:col-span-2">
                       External URL
                       <input
                         value={variantForm.externalUrl ?? ''}
                         onChange={(event) => setVariantForm({ ...variantForm, externalUrl: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200 md:col-span-2">
+                      Credit
+                      <input
+                        value={variantForm.credit ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, credit: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200 md:col-span-2">
+                      Source URL
+                      <input
+                        value={variantForm.sourceUrl ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, sourceUrl: event.target.value })}
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
                       />
                     </label>

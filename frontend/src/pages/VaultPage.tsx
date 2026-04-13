@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { DoorOpen, ArrowLeft } from 'lucide-react';
 import VaultSection from '@/components/VaultSection';
+import { homeSectionHref } from '@/lib/homeNavigation';
 
 export default function VaultPage() {
   const [searchParams] = useSearchParams();
@@ -12,11 +13,11 @@ export default function VaultPage() {
       <header className="border-b border-purple-400/15 bg-[#3a2563]/24">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between max-w-7xl">
           <Link
-            to="/"
+            to={homeSectionHref('vault')}
             className="flex items-center gap-2 text-purple-200 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            Back to Spiral Ascension
+            Back to Vault
           </Link>
           <div className="flex items-center gap-2">
             <DoorOpen className="h-8 w-8 text-amber-400" />
@@ -28,6 +29,15 @@ export default function VaultPage() {
 
       <main>
         <VaultSection initialMode={initialMode} />
+        <div className="container mx-auto flex justify-center px-4 pb-12">
+          <Link
+            to={homeSectionHref('vault')}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Vault
+          </Link>
+        </div>
       </main>
     </div>
   );

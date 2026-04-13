@@ -5,6 +5,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import { marked } from 'marked';
 import { useSpiralData } from '@/hooks/useSpiralData';
 import { fetchLessonContent } from '@/lib/spiralApi';
+import { homeSectionHref } from '@/lib/homeNavigation';
 import LessonNoteBox from '@/components/LessonNoteBox';
 
 marked.setOptions({
@@ -17,18 +18,20 @@ export default function SpiralLessonPage() {
   const parsedTier = Number(tier);
   const { modules } = useSpiralData();
   const module = modules.find((item) => item.id === id);
-  const { data: lesson, isLoading } = useQuery({
+  const { data: lesson, isLoading, isError } = useQuery({
     queryKey: ['lesson', id, parsedTier],
     queryFn: () => fetchLessonContent(id!, parsedTier),
     enabled: !!id && Number.isFinite(parsedTier),
     staleTime: 0,
     refetchOnMount: 'always',
+    retry: false,
   });
 
   const lessonHtml = useMemo(() => {
     if (!lesson?.markdown) return '';
     return marked.parse(lesson.markdown) as string;
   }, [lesson]);
+  const moduleHref = id ? `/module/${id}` : homeSectionHref('spiral');
 
   if (!module) {
     return (
@@ -39,7 +42,7 @@ export default function SpiralLessonPage() {
             This Spiral lesson is not available yet or has not been connected to a formatted file.
           </p>
           <button
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            onClick={() => navigate(moduleHref)}
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -58,7 +61,7 @@ export default function SpiralLessonPage() {
     );
   }
 
-  if (!lesson) {
+  if (!lesson || isError) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a0b2e] via-[#2d1b4e] to-[#0c0716] text-white">
         <div className="mx-auto max-w-3xl px-4 py-20 text-center space-y-6">
@@ -67,7 +70,7 @@ export default function SpiralLessonPage() {
             This Spiral lesson is not available yet or has not been connected to a formatted file.
           </p>
           <button
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            onClick={() => navigate(moduleHref)}
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -83,7 +86,7 @@ export default function SpiralLessonPage() {
       <header className="border-b border-purple-700/40 bg-purple-950/35 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <button
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            onClick={() => navigate(moduleHref)}
             className="inline-flex items-center gap-2 text-purple-200 transition hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -93,7 +96,7 @@ export default function SpiralLessonPage() {
             <Sparkles className="h-4 w-4 text-amber-400" />
             Spiral Lesson
           </div>
-          <Link to="/" className="text-sm text-purple-200 transition hover:text-white">
+          <Link to={homeSectionHref('spiral')} className="text-sm text-purple-200 transition hover:text-white">
             Home
           </Link>
         </div>
@@ -128,6 +131,16 @@ export default function SpiralLessonPage() {
           />
           {id && <LessonNoteBox moduleId={id} />}
         </section>
+
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={() => navigate(moduleHref)}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to {module.title}
+          </button>
+        </div>
       </main>
     </div>
   );

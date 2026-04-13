@@ -4,8 +4,48 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import { marked } from 'marked';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
+import { homeSectionHref } from '@/lib/homeNavigation';
 
 marked.setOptions({ breaks: true });
+
+function getEmbedUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+
+    if (
+      parsed.hostname.includes('youtube.com') &&
+      parsed.searchParams.get('v')
+    ) {
+      return `https://www.youtube.com/embed/${parsed.searchParams.get('v')}`;
+    }
+
+    if (parsed.hostname === 'youtu.be') {
+      const videoId = parsed.pathname.replace('/', '');
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    }
+
+    if (parsed.hostname.includes('vimeo.com')) {
+      const videoId = parsed.pathname.split('/').filter(Boolean).pop();
+      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function getChildCollectionHeading(variantId: string) {
+  if (variantId.startsWith('breath-')) {
+    return 'Practices in this lane';
+  }
+
+  if (variantId === 'resonance-gate') {
+    return 'Explore the chamber';
+  }
+
+  return 'Explore entries';
+}
 
 export default function PracticeEntryDetail() {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +58,7 @@ export default function PracticeEntryDetail() {
     ? `/practice/${parentPractice.id}`
     : parentVariant
       ? `/practice-entry/${parentVariant.id}`
-      : '/';
+      : homeSectionHref('practices');
   const childVariants = useMemo(
     () => variants.filter((item) => item.parentId === variant?.id),
     [variant?.id, variants]
@@ -28,6 +68,11 @@ export default function PracticeEntryDetail() {
     if (!variant?.body?.trim()) return '';
     return marked.parse(variant.body) as string;
   }, [variant?.body]);
+
+  const embeddedMediaUrl = useMemo(() => {
+    if (!variant?.mediaUrl?.trim()) return null;
+    return getEmbedUrl(variant.mediaUrl);
+  }, [variant?.mediaUrl]);
 
   const handleStart = (variantId: string) => {
     try {
@@ -44,11 +89,11 @@ export default function PracticeEntryDetail() {
           <h1 className="text-3xl font-bold">Practice entry not found</h1>
           <p className="text-purple-200">This practice may have moved or is not yet available.</p>
           <Link
-            to="/"
+            to={homeSectionHref('practices')}
             className="inline-flex items-center gap-2 text-amber-300 hover:text-amber-200"
           >
             <ArrowLeft className="h-5 w-5" />
-            Return to Spiral Ascension
+            Return to Practices
           </Link>
         </div>
       </div>
@@ -97,8 +142,79 @@ export default function PracticeEntryDetail() {
             <span className="px-3 py-1 rounded-full bg-purple-800/60 text-purple-200">
               {variant.level}
             </span>
+            {variant.frequency && (
+              <span className="px-3 py-1 rounded-full bg-amber-500/15 text-amber-200 border border-amber-400/20">
+                {variant.frequency}
+              </span>
+            )}
           </div>
+          {variant.supportState && (
+            <p className="text-purple-200/85 max-w-3xl">
+              <span className="font-semibold text-white">Best for:</span> {variant.supportState}
+            </p>
+          )}
+          {(variant.creator || variant.credit || variant.sourceUrl) && (
+            <div className="text-sm text-purple-200/80 space-y-1">
+              {variant.creator && <p><span className="font-semibold text-white">Creator:</span> {variant.creator}</p>}
+              {variant.credit && <p><span className="font-semibold text-white">Credit:</span> {variant.credit}</p>}
+              {variant.sourceUrl && (
+                <p>
+                  <span className="font-semibold text-white">Source:</span>{' '}
+                  <a
+                    href={variant.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-amber-300 hover:text-amber-200"
+                  >
+                    Open source link
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
         </section>
+
+        {(embeddedMediaUrl || variant.mediaUrl || variant.audioUrl) && (
+          <section className="rounded-2xl border border-purple-700/50 bg-[#1f1038]/70 p-6 lg:p-10 shadow-xl space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl font-semibold text-white">Assigned Media</h2>
+              {variant.mediaType && (
+                <span className="text-xs uppercase tracking-[0.3em] text-purple-300">
+                  {variant.mediaType}
+                </span>
+              )}
+            </div>
+            {embeddedMediaUrl ? (
+              <div className="overflow-hidden rounded-2xl border border-purple-700/50 aspect-video bg-black/30">
+                <iframe
+                  src={embeddedMediaUrl}
+                  title={variant.title}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : variant.mediaUrl ? (
+              <div className="rounded-2xl border border-purple-700/50 bg-purple-950/50 p-5 space-y-3">
+                <p className="text-purple-100">Assigned media is linked for this entry.</p>
+                <a
+                  href={variant.mediaUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex rounded-lg bg-purple-600 px-4 py-2 font-semibold text-white hover:bg-purple-500"
+                >
+                  Open Media
+                </a>
+              </div>
+            ) : null}
+
+            {variant.audioUrl && (
+              <audio controls className="w-full">
+                <source src={variant.audioUrl} />
+              </audio>
+            )}
+          </section>
+        )}
 
         {bodyHtml && (
           <section className="rounded-2xl border border-purple-700/50 bg-[#1f1038]/70 p-6 lg:p-10 shadow-xl">
@@ -112,7 +228,7 @@ export default function PracticeEntryDetail() {
         {childVariants.length > 0 && (
           <section className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-white">Explore entries</h2>
+              <h2 className="text-2xl font-semibold text-white">{getChildCollectionHeading(variant.id)}</h2>
               <span className="text-sm text-purple-300">{childVariants.length} available</span>
             </div>
 
@@ -137,6 +253,16 @@ export default function PracticeEntryDetail() {
             </div>
           </section>
         )}
+
+        <div className="flex justify-center pt-2">
+          <Link
+            to={backHref}
+            className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to {parentEntry.title}
+          </Link>
+        </div>
       </main>
     </div>
   );

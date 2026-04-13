@@ -11,6 +11,8 @@ interface PracticeCardProps {
     image: string;
     description: string;
     subtitle?: string;
+    frequency?: string;
+    supportState?: string;
   };
   variant?: boolean;
   startLabel?: string;
@@ -59,6 +61,21 @@ export default function PracticeCard({
         <p className={`text-[#e8e8f0]/70 text-sm leading-relaxed ${useMinimalMeta ? 'mb-6 line-clamp-3' : 'mb-4 line-clamp-4'}`}>
           {practice.description}
         </p>
+
+        {(practice.frequency || practice.supportState) && (
+          <div className={`flex flex-wrap gap-2 ${useMinimalMeta ? 'mb-6' : 'mb-4'}`}>
+            {practice.frequency ? (
+              <span className="rounded-full border border-amber-400/20 bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-200">
+                {practice.frequency}
+              </span>
+            ) : null}
+            {practice.supportState && !useMinimalMeta ? (
+              <span className="rounded-full border border-purple-400/20 bg-purple-500/15 px-3 py-1 text-xs text-purple-100/85">
+                Best for: {practice.supportState}
+              </span>
+            ) : null}
+          </div>
+        )}
 
         <div className={`mt-auto ${useMinimalMeta ? 'flex justify-end' : 'flex items-center justify-between gap-3'}`}>
           {!useMinimalMeta ? (

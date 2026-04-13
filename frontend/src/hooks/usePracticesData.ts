@@ -6,6 +6,28 @@ import {
   legacyPracticeImages,
 } from '@/data/practices';
 
+const curatedDirectChildrenParents = new Set([
+  'breathwork-compendium',
+  'resonance-gate',
+]);
+
+function mergeById<T extends { id: string }>(fallback: T[], api: T[]) {
+  const fallbackIds = new Set(fallback.map((item) => item.id));
+  const apiById = new Map(api.map((item) => [item.id, item]));
+
+  const merged = fallback.map((item) => ({
+    ...item,
+    ...(apiById.get(item.id) ?? {}),
+  }));
+
+  for (const item of api) {
+    if (fallbackIds.has(item.id)) continue;
+    merged.push(item);
+  }
+
+  return merged;
+}
+
 function normalizePractices(practices: typeof fallbackPractices) {
   return practices.map((practice) => ({
     ...practice,
@@ -70,8 +92,21 @@ export function usePracticesData() {
     initialData: fallbackVariants,
   });
 
-  const practices = normalizePractices(practicesQuery.data ?? fallbackPractices);
-  const variants = normalizeVariants(variantsQuery.data ?? fallbackVariants, practices);
+  const mergedPractices = mergeById(
+    fallbackPractices,
+    practicesQuery.data ?? fallbackPractices
+  );
+  const mergedVariants = mergeById(
+    fallbackVariants,
+    (variantsQuery.data ?? fallbackVariants).filter(
+      (variant) =>
+        fallbackVariants.some((fallback) => fallback.id === variant.id) ||
+        !curatedDirectChildrenParents.has(variant.parentId)
+    )
+  );
+
+  const practices = normalizePractices(mergedPractices);
+  const variants = normalizeVariants(mergedVariants, practices);
 
   return {
     practices,
