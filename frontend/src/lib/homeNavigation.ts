@@ -8,5 +8,5 @@ export const HOME_SECTION_IDS = {
 export type HomeSectionKey = keyof typeof HOME_SECTION_IDS;
 
 export function homeSectionHref(section: HomeSectionKey) {
-  return `/#${HOME_SECTION_IDS[section]}`;
+  return `/app#${HOME_SECTION_IDS[section]}`;
 }

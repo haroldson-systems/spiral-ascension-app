@@ -31,7 +31,7 @@ export default function AuthPage() {
         setError(signInError.message);
         return;
       }
-      navigate('/');
+      navigate('/app');
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function AuthPage() {
         return;
       }
       if (data.session) {
-        navigate('/');
+        navigate('/app');
         return;
       }
       setMessage(

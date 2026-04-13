@@ -23,6 +23,7 @@ import CheckoutSuccessPage from "./pages/CheckoutSuccessPage";
 import CheckoutCancelPage from "./pages/CheckoutCancelPage";
 import SubscribePage from "./pages/SubscribePage";
 import AuthPage from "./pages/AuthPage";
+import EntryPage from "./pages/EntryPage";
 import { AppAccessGate } from "./components/AppAccessGate";
 
 
@@ -110,7 +111,8 @@ const App = () => (
 
               <Route path="/admin" element={<AdminPractices />} />
 
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<EntryPage />} />
+              <Route path="/app" element={<AppAccessGate><Index /></AppAccessGate>} />
 
               {/* MoonSync full tracker */}
               <Route path="/moonsync" element={<AppAccessGate><MoonSyncTrackerPage /></AppAccessGate>} />

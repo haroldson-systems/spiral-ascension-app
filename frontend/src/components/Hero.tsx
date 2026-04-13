@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { StripeCheckoutButton } from '@/components/StripeCheckoutButton';
 
 export default function Hero() {
   const scrollToSpiral = () => {
@@ -50,14 +49,7 @@ export default function Hero() {
           </Link>
         </div>
 
-        <div className="mx-auto mt-10 max-w-md text-center">
-          <p className="mb-3 text-sm text-[#e8e8f0]/75">
-            First week free. $3.33/month after. Card required at signup.
-          </p>
-          <StripeCheckoutButton />
-        </div>
-
-        <p className="mt-8 text-[#e8e8f0]/60 text-sm">
+        <p className="mt-10 text-[#e8e8f0]/60 text-sm">
           Couldn't find it, so I built it.
         </p>
 
