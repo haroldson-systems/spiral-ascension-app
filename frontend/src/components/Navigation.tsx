@@ -52,6 +52,13 @@ export default function Navigation() {
               Vault
             </Link>
 
+            <Link
+              to="/account/password"
+              className="text-[#e8e8f0]/70 hover:text-[#e8e8f0] transition-colors"
+            >
+              Account
+            </Link>
+
             <button
               onClick={() => scrollToSection('practice-section')}
               className="text-[#e8e8f0]/70 hover:text-[#e8e8f0] transition-colors"

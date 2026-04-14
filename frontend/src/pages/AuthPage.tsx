@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -17,6 +17,33 @@ export default function AuthPage() {
     setMessage(null);
     setError(null);
   };
+
+  useEffect(() => {
+    let active = true;
+
+    const syncSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (active && session) {
+        navigate('/app', { replace: true });
+      }
+    };
+
+    void syncSession();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active && session) {
+        navigate('/app', { replace: true });
+      }
+    });
+
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,6 +72,9 @@ export default function AuthPage() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/app`,
+        },
       });
       if (signUpError) {
         setError(signUpError.message);
@@ -138,6 +168,12 @@ export default function AuthPage() {
               {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
             </button>
           </form>
+
+          <p className="mt-4 text-center text-sm text-purple-200/85">
+            <Link to="/auth/forgot" className="font-semibold text-[#d4af37] underline-offset-4 hover:underline">
+              Forgot password?
+            </Link>
+          </p>
 
           {error ? (
             <p className="mt-4 text-center text-sm text-red-300" role="alert">

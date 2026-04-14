@@ -24,6 +24,9 @@ import CheckoutCancelPage from "./pages/CheckoutCancelPage";
 import SubscribePage from "./pages/SubscribePage";
 import AuthPage from "./pages/AuthPage";
 import EntryPage from "./pages/EntryPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 import { AppAccessGate } from "./components/AppAccessGate";
 
 
@@ -93,6 +96,9 @@ const App = () => (
             <Routes>
               <Route path="/subscribe" element={<SubscribePage />} />
               <Route path="/auth" element={<AuthPage />} />
+              <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
+              <Route path="/auth/reset" element={<ResetPasswordPage />} />
+              <Route path="/account/password" element={<ChangePasswordPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
 
