@@ -7,10 +7,41 @@ export interface SpiralModule {
   image_masculine?: string;
   description: string;
   tier?: number;   // 1 = Initiate, 2 = Architect, 3 = Adept
+  frequency?: string;
+  audioUrl?: string;
+  mediaType?: 'audio';
 }
 
+const MODULE_TONE_ASSIGNMENTS: Record<string, Pick<SpiralModule, 'frequency' | 'audioUrl' | 'mediaType'>> = {
+  mentalism: { frequency: '963 Hz', audioUrl: '/audio/tones/963Hz.mp3', mediaType: 'audio' },
+  correspondence: { frequency: '396 Hz', audioUrl: '/audio/tones/396Hz.mp3', mediaType: 'audio' },
+  vibration: { frequency: '396 Hz', audioUrl: '/audio/tones/396Hz.mp3', mediaType: 'audio' },
+  polarity: { frequency: '639 Hz', audioUrl: '/audio/tones/639Hz.mp3', mediaType: 'audio' },
+  rhythm: { frequency: '396 Hz', audioUrl: '/audio/tones/396Hz.mp3', mediaType: 'audio' },
+  'cause-effect': { frequency: '852 Hz', audioUrl: '/audio/tones/852Hz.mp3', mediaType: 'audio' },
+  gender: { frequency: '417 Hz', audioUrl: '/audio/tones/417Hz.mp3', mediaType: 'audio' },
+  'mentalism-2': { frequency: '852 Hz', audioUrl: '/audio/tones/852Hz.mp3', mediaType: 'audio' },
+  'correspondence-2': { frequency: '417 Hz', audioUrl: '/audio/tones/417Hz.mp3', mediaType: 'audio' },
+  'vibration-2': { frequency: '417 Hz', audioUrl: '/audio/tones/417Hz.mp3', mediaType: 'audio' },
+  'polarity-2': { frequency: '741 Hz', audioUrl: '/audio/tones/741Hz.mp3', mediaType: 'audio' },
+  'rhythm-2': { frequency: '417 Hz', audioUrl: '/audio/tones/417Hz.mp3', mediaType: 'audio' },
+  'cause-effect-2': { frequency: '963 Hz', audioUrl: '/audio/tones/963Hz.mp3', mediaType: 'audio' },
+  'gender-2': { frequency: '852 Hz', audioUrl: '/audio/tones/852Hz.mp3', mediaType: 'audio' },
+  'mentalism-3': { frequency: '741 Hz', audioUrl: '/audio/tones/741Hz.mp3', mediaType: 'audio' },
+  'correspondence-3': { frequency: '528 Hz', audioUrl: '/audio/tones/528Hz.mp3', mediaType: 'audio' },
+  'vibration-3': { frequency: '528 Hz', audioUrl: '/audio/tones/528Hz.mp3', mediaType: 'audio' },
+  'polarity-3': { frequency: '852 Hz', audioUrl: '/audio/tones/852Hz.mp3', mediaType: 'audio' },
+  'rhythm-3': { frequency: '528 Hz', audioUrl: '/audio/tones/528Hz.mp3', mediaType: 'audio' },
+  'cause-effect-3': { frequency: '999 Hz', audioUrl: '/audio/tones/999Hz.mp3', mediaType: 'audio' },
+  'gender-3': { frequency: '963 Hz', audioUrl: '/audio/tones/963Hz.mp3', mediaType: 'audio' },
+};
 
-export const spiralChapters = [
+function withModuleTone(module: SpiralModule): SpiralModule {
+  const tone = MODULE_TONE_ASSIGNMENTS[module.id];
+  return tone ? { ...module, ...tone } : module;
+}
+
+const baseSpiralChapters: SpiralModule[] = [
 
   {
     id: "0",
@@ -253,3 +284,5 @@ export const spiralChapters = [
     description: "A final ceremonial close to embody the seven laws and carry the Spiral forward."
   }
 ];
+
+export const spiralChapters: SpiralModule[] = baseSpiralChapters.map(withModuleTone);

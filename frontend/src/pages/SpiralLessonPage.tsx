@@ -113,7 +113,24 @@ export default function SpiralLessonPage() {
                 {module.title}
               </h1>
               <p className="max-w-3xl text-lg text-purple-200">{module.subtitle}</p>
+              {module.frequency ? (
+                <div className="flex flex-wrap gap-3">
+                  <span className="rounded-full border border-amber-400/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200">
+                    Assigned Tone: {module.frequency}
+                  </span>
+                </div>
+              ) : null}
               <p className="max-w-3xl text-purple-100/85">{module.description}</p>
+              {module.audioUrl ? (
+                <div className="max-w-xl rounded-2xl border border-purple-500/20 bg-[#1a0d31]/80 p-4">
+                  <p className="mb-3 text-sm text-purple-200">
+                    Use the module tone before or during the lesson to stay inside the assigned field.
+                  </p>
+                  <audio controls loop className="w-full">
+                    <source src={module.audioUrl} />
+                  </audio>
+                </div>
+              ) : null}
             </div>
 
             {module.image ? (
