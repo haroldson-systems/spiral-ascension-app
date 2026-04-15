@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Sparkles } from 'lucide-react';
@@ -18,6 +18,7 @@ export default function SpiralLessonPage() {
   const parsedTier = Number(tier);
   const { modules } = useSpiralData();
   const module = modules.find((item) => item.id === id);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { data: lesson, isLoading, isError } = useQuery({
     queryKey: ['lesson', id, parsedTier],
     queryFn: () => fetchLessonContent(id!, parsedTier),
@@ -31,7 +32,13 @@ export default function SpiralLessonPage() {
     if (!lesson?.markdown) return '';
     return marked.parse(lesson.markdown) as string;
   }, [lesson]);
-  const moduleHref = id ? `/module/${id}` : homeSectionHref('spiral');
+  const isTierLesson = Number.isFinite(parsedTier) && parsedTier >= 1 && parsedTier <= 3;
+  const backHref = isTierLesson ? `/module/${parsedTier}` : id ? `/module/${id}` : homeSectionHref('spiral');
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.volume = 0.2;
+  }, [module?.audioUrl]);
 
   if (!module) {
     return (
@@ -42,7 +49,7 @@ export default function SpiralLessonPage() {
             This Spiral lesson is not available yet or has not been connected to a formatted file.
           </p>
           <button
-            onClick={() => navigate(moduleHref)}
+            onClick={() => navigate(backHref)}
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -70,7 +77,7 @@ export default function SpiralLessonPage() {
             This Spiral lesson is not available yet or has not been connected to a formatted file.
           </p>
           <button
-            onClick={() => navigate(moduleHref)}
+            onClick={() => navigate(backHref)}
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -86,7 +93,7 @@ export default function SpiralLessonPage() {
       <header className="border-b border-purple-700/40 bg-purple-950/35 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <button
-            onClick={() => navigate(moduleHref)}
+            onClick={() => navigate(backHref)}
             className="inline-flex items-center gap-2 text-purple-200 transition hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -123,10 +130,11 @@ export default function SpiralLessonPage() {
               <p className="max-w-3xl text-purple-100/85">{module.description}</p>
               {module.audioUrl ? (
                 <div className="max-w-xl rounded-2xl border border-purple-500/20 bg-[#1a0d31]/80 p-4">
-                  <p className="mb-3 text-sm text-purple-200">
-                    Use the module tone before or during the lesson to stay inside the assigned field.
+                  <p className="mb-3 text-sm text-amber-200">
+                    Volume warning: lower your volume before pressing play. The tone starts at a reduced in-player
+                    volume, but device volume still controls the final output.
                   </p>
-                  <audio controls loop className="w-full">
+                  <audio ref={audioRef} controls loop className="w-full">
                     <source src={module.audioUrl} />
                   </audio>
                 </div>
@@ -151,7 +159,7 @@ export default function SpiralLessonPage() {
 
         <div className="mt-10 flex justify-center">
           <button
-            onClick={() => navigate(moduleHref)}
+            onClick={() => navigate(backHref)}
             className="inline-flex items-center gap-2 rounded-lg bg-purple-600/40 px-5 py-3 text-white transition hover:bg-purple-600/60"
           >
             <ArrowLeft className="h-5 w-5" />
