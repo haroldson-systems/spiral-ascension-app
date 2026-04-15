@@ -13,9 +13,9 @@ function GateShell({ children }: { children: ReactNode }) {
 }
 
 export function AppAccessGate({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated, userEmail, hasAccess } = useMembershipAccess();
+  const { isLoading, isAuthenticated, userEmail, hasAccess, lastKnownHasAccess } = useMembershipAccess();
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && lastKnownHasAccess && !hasAccess)) {
     return (
       <GateShell>
         <p className="text-sm uppercase tracking-[0.3em] text-purple-300">Checking access...</p>

@@ -1,22 +1,11 @@
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
+import { adminRequest } from '@/lib/adminApi';
 
-function getAdminToken(): string | null {
-  try {
-    return localStorage.getItem('adminToken');
-  } catch {
-    return null;
-  }
-}
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers ?? {});
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
-  }
-
-  const token = getAdminToken();
-  if (token) {
-    headers.set('x-admin-token', token);
   }
 
   const response = await fetch(`${API_BASE}${path}`, {
@@ -41,7 +30,7 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
 }
 
 export async function updateSiteSettings(payload: SiteSettings): Promise<SiteSettings> {
-  return request<SiteSettings>('/site-settings', {
+  return adminRequest<SiteSettings>('/site-settings', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

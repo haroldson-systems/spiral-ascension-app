@@ -27,6 +27,7 @@ export function useMembershipAccess() {
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [lastKnownHasAccess, setLastKnownHasAccess] = useState(false);
 
   const userEmail = session?.user?.email?.trim() ?? null;
   const isAuthenticated = Boolean(session?.user);
@@ -35,6 +36,17 @@ export function useMembershipAccess() {
     Boolean(userEmail) &&
     subscriptionStatus != null &&
     ALLOWED_STATUSES.has(subscriptionStatus);
+
+  useEffect(() => {
+    if (hasAccess) {
+      setLastKnownHasAccess(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setLastKnownHasAccess(false);
+    }
+  }, [hasAccess, isAuthenticated]);
 
   const loadSubscriptionForUser = useCallback(async (user: User | null) => {
     const email = user?.email?.trim();
@@ -135,6 +147,7 @@ export function useMembershipAccess() {
     userEmail,
     subscriptionStatus,
     hasAccess,
+    lastKnownHasAccess,
     refreshAccess,
     signOut,
   };

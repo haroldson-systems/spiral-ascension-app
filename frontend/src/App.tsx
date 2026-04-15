@@ -28,6 +28,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import { AppAccessGate } from "./components/AppAccessGate";
+import { AdminAccessGate } from "./components/AdminAccessGate";
 
 
 const queryClient = new QueryClient();
@@ -105,7 +106,7 @@ const App = () => (
               <Route path="/billing/success" element={<BillingSuccessPage />} />
               <Route path="/billing/cancel" element={<BillingCancelPage />} />
 
-              <Route path="/admin" element={<AdminPractices />} />
+              <Route path="/admin" element={<AdminAccessGate><AdminPractices /></AdminAccessGate>} />
 
               <Route path="/" element={<EntryPage />} />
               <Route path="/app" element={<AppAccessGate><Index /></AppAccessGate>} />

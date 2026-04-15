@@ -1,6 +1,7 @@
 import type { SpiralModule } from '@/data/spiralChapters';
 import { spiralSpecialLessons } from '@/data/spiralSpecialLessons';
 import { getSpiralLessonContent } from '@/lib/spiralLessons';
+import { adminRequest } from '@/lib/adminApi';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
@@ -38,23 +39,10 @@ function fetchWithTimeout(
   );
 }
 
-function getAdminToken(): string | null {
-  try {
-    return localStorage.getItem('adminToken');
-  } catch {
-    return null;
-  }
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers ?? {});
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
-  }
-
-  const token = getAdminToken();
-  if (token) {
-    headers.set('x-admin-token', token);
   }
 
   const response = await fetchWithTimeout(`${API_BASE}${path}`, {
@@ -76,18 +64,18 @@ export async function fetchSpiralModules(tier?: number): Promise<SpiralModule[]>
 }
 
 export async function upsertSpiralModule(module: SpiralModule): Promise<SpiralModule> {
-  return request<SpiralModule>('/spiral-modules', {
+  return adminRequest<SpiralModule>('/spiral-modules', {
     method: 'POST',
     body: JSON.stringify(module),
   });
 }
 
 export async function deleteSpiralModule(moduleId: string): Promise<void> {
-  await request(`/spiral-modules/${encodeURIComponent(moduleId)}`, { method: 'DELETE' });
+  await adminRequest(`/spiral-modules/${encodeURIComponent(moduleId)}`, { method: 'DELETE' });
 }
 
 export async function bulkUpsertSpiralModules(modules: SpiralModule[]): Promise<SpiralModule[]> {
-  return request<SpiralModule[]>('/spiral-modules/bulk', {
+  return adminRequest<SpiralModule[]>('/spiral-modules/bulk', {
     method: 'POST',
     body: JSON.stringify(modules),
   });

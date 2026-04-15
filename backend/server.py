@@ -21,6 +21,11 @@ load_dotenv(ROOT_DIR / '.env')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
 ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN')
+ADMIN_EMAILS = {
+    email.strip().lower()
+    for email in os.environ.get('ADMIN_EMAILS', '').split(',')
+    if email.strip()
+}
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
 STRIPE_PRICE_ID = os.environ.get('STRIPE_PRICE_ID')
 STRIPE_PRODUCT_ID = os.environ.get('STRIPE_PRODUCT_ID')
@@ -127,6 +132,14 @@ class SiteSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     maintenanceMode: bool = False
+
+
+class AdminAccessResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    authorized: bool = True
+    email: Optional[str] = None
+    via: str
 
 
 class StripeCheckoutSessionRequest(BaseModel):
@@ -276,11 +289,28 @@ def calculate_lunar_phases(anchor: date, year: int, cycle_mode: int = 12):
     return results
 
 def require_admin(request: Request) -> None:
-    if not ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Admin token not configured")
     token = request.headers.get('x-admin-token')
-    if token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    if ADMIN_TOKEN and token == ADMIN_TOKEN:
+        return
+
+    auth_header = request.headers.get("authorization", "")
+    bearer_prefix = "bearer "
+    jwt = auth_header[len(bearer_prefix):].strip() if auth_header.lower().startswith(bearer_prefix) else ""
+
+    if jwt and ADMIN_EMAILS:
+        try:
+            auth_response = supabase.auth.get_user(jwt)
+            user = getattr(auth_response, "user", None)
+            email = getattr(user, "email", None)
+            if email and email.strip().lower() in ADMIN_EMAILS:
+                return
+        except Exception:
+            logger.info("Failed admin auth verification from bearer token")
+
+    if not ADMIN_TOKEN and not ADMIN_EMAILS:
+        raise HTTPException(status_code=401, detail="Admin auth is not configured")
+
+    raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 def require_stripe() -> None:
@@ -399,6 +429,29 @@ async def update_site_settings(payload: SiteSettings, request: Request):
     require_admin(request)
     SITE_SETTINGS_STATE["maintenanceMode"] = payload.maintenanceMode
     return SiteSettings(**SITE_SETTINGS_STATE)
+
+
+@api_router.get("/admin/access", response_model=AdminAccessResponse)
+async def get_admin_access(request: Request):
+    require_admin(request)
+    auth_header = request.headers.get("authorization", "")
+    bearer_prefix = "bearer "
+    jwt = auth_header[len(bearer_prefix):].strip() if auth_header.lower().startswith(bearer_prefix) else ""
+
+    email = None
+    via = "token"
+    if jwt and ADMIN_EMAILS:
+        try:
+            auth_response = supabase.auth.get_user(jwt)
+            user = getattr(auth_response, "user", None)
+            verified_email = getattr(user, "email", None)
+            if verified_email and verified_email.strip().lower() in ADMIN_EMAILS:
+                email = verified_email.strip().lower()
+                via = "session"
+        except Exception:
+            logger.info("Failed to include verified admin email in admin access response")
+
+    return AdminAccessResponse(authorized=True, email=email, via=via)
 
 
 @api_router.post('/stripe/checkout-session', response_model=StripeCheckoutSessionResponse)

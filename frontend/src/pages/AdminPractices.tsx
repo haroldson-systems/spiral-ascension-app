@@ -4,6 +4,7 @@ import { SpiralModule, spiralChapters as fallbackModules } from '@/data/spiralCh
 import { bulkUpsertPractices, bulkUpsertPracticeVariants, deletePractice, deletePracticeVariant, upsertPractice, upsertPracticeVariant } from '@/lib/practicesApi';
 import { bulkUpsertSpiralModules, deleteSpiralModule, upsertSpiralModule } from '@/lib/spiralApi';
 import { updateSiteSettings } from '@/lib/siteSettingsApi';
+import { getStoredAdminToken, saveStoredAdminToken } from '@/lib/adminApi';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useSpiralData } from '@/hooks/useSpiralData';
@@ -69,7 +70,7 @@ export default function AdminPractices() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('adminToken');
+      const stored = getStoredAdminToken();
       if (stored) setAdminToken(stored);
     } catch {
       /* ignore */
@@ -121,7 +122,7 @@ export default function AdminPractices() {
 
   const handleSaveToken = () => {
     try {
-      localStorage.setItem('adminToken', adminToken.trim());
+      saveStoredAdminToken(adminToken.trim());
       setStatus('Admin token saved.');
     } catch {
       setStatus('Unable to store token in browser.');
