@@ -113,7 +113,7 @@ export default function EntryPage() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 bg-[radial-gradient(ellipse_90%_55%_at_50%_65%,_rgba(94,45,154,0.22)_0%,_transparent_72%)] opacity-90" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,6,24,0)_0%,rgba(10,5,18,0.18)_45%,rgba(6,3,12,0.42)_100%)]" />
 
-      <div className="absolute left-6 top-6 z-20 flex items-center gap-3 md:left-10 md:top-8">
+      <div className="absolute left-[5px] top-[5px] z-20 flex items-center gap-3">
           <img
             src={SIGIL_SRC}
             alt=""
@@ -126,7 +126,7 @@ export default function EntryPage() {
           </span>
       </div>
 
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-6 pb-24 pt-0 text-center md:px-10 md:pb-28 md:pt-0">
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-6 pb-24 pt-[5px] text-center md:px-10 md:pb-28 md:pt-[5px]">
         <div className="w-full">
           <div className="mb-8 motion-reduce:animate-none md:mb-10">
             <img
