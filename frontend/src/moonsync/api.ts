@@ -6,6 +6,25 @@ const API_BASE =
   (import.meta.env.VITE_API_URL_LOCAL as string | undefined) ??
   'http://127.0.0.1:8001/api';
 const LOCAL_USER_KEY = 'moonsync-user-id';
+const REQUEST_TIMEOUT_MS = 8000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(new Error('Request timed out'));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
 
 function getStoredUserId(): string | null {
   if (typeof window === 'undefined') return null;
@@ -31,7 +50,7 @@ function storeUserId(userId: string) {
 
 async function getUserId(): Promise<string> {
   try {
-    const { data: userData } = await supabase.auth.getUser();
+    const { data: userData } = await withTimeout(supabase.auth.getUser());
     if (userData?.user?.id) {
       storeUserId(userData.user.id);
       return userData.user.id;
@@ -41,7 +60,7 @@ async function getUserId(): Promise<string> {
   }
 
   try {
-    const { data, error } = await supabase.auth.signInAnonymously();
+    const { data, error } = await withTimeout(supabase.auth.signInAnonymously());
     if (!error && data.user?.id) {
       storeUserId(data.user.id);
       return data.user.id;
@@ -66,10 +85,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const userId = await getUserId();
   headers.set('x-moonsync-user', userId);
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
+  const response = await withTimeout(
+    fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    }),
+  );
 
   if (!response.ok) {
     const message = await response.text();
