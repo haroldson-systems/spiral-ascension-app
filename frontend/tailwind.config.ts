@@ -92,8 +92,14 @@ export default {
           to: { transform: 'translateY(0)', opacity: '1' },
         },
         'sigil-soft': {
-          '0%, 100%': { opacity: '0.88', transform: 'scale(1)' },
-          '50%': { opacity: '1', transform: 'scale(1.02)' },
+          '0%, 100%': {
+            opacity: '0.94',
+            filter: 'drop-shadow(0 0 0.2rem rgba(212, 175, 55, 0.12)) drop-shadow(0 0 0.9rem rgba(162, 89, 255, 0.16))',
+          },
+          '50%': {
+            opacity: '1',
+            filter: 'drop-shadow(0 0 0.35rem rgba(255, 235, 180, 0.22)) drop-shadow(0 0 1.5rem rgba(170, 95, 255, 0.32))',
+          },
         },
       },
       animation: {

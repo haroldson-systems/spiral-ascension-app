@@ -14,8 +14,6 @@ const STORY_P2 =
 const STORY_P3 =
   'But the knowing never left. It waited. Spiraling deeper, until one day—when the pain of forgetting became greater than the fear of remembering—he began the descent.';
 
-type AuthMode = 'signin' | 'signup';
-
 export default function EntryPage() {
   const navigate = useNavigate();
   const formId = useId();
@@ -23,26 +21,19 @@ export default function EntryPage() {
   const passwordId = `${formId}-password`;
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [mode, setMode] = useState<AuthMode>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const resetFeedback = useCallback(() => {
-    setMessage(null);
     setError(null);
   }, []);
 
-  const openModal = useCallback(
-    (nextMode: AuthMode) => {
-      resetFeedback();
-      setMode(nextMode);
-      setModalOpen(true);
-    },
-    [resetFeedback],
-  );
+  const openModal = useCallback(() => {
+    resetFeedback();
+    setModalOpen(true);
+  }, [resetFeedback]);
 
   const closeModal = useCallback(() => {
     setModalOpen(false);
@@ -114,81 +105,71 @@ export default function EntryPage() {
     }
   };
 
-  const handleSignUp = async (e: FormEvent) => {
-    e.preventDefault();
-    resetFeedback();
-    setLoading(true);
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/app`,
-        },
-      });
-      if (signUpError) {
-        setError(signUpError.message);
-        return;
-      }
-      if (data.session) {
-        closeModal();
-        navigate('/subscribe');
-        return;
-      }
-      setMessage(
-        'Check your email for a confirmation link if your project requires it. After confirming, sign in here.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="relative min-h-screen bg-gradient-to-b from-[#3a2563] via-[#2d1b4e] to-[#0f0618] text-white">
-      <div className="pointer-events-none absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_0%,_#8b5cf6_0%,_transparent_55%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#24103d] via-[#2f1650] to-[#14081f] text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-55">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_85%_at_50%_0%,_rgba(236,214,166,0.2)_0%,_rgba(139,92,246,0.18)_32%,_transparent_62%)]" />
       </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 bg-[radial-gradient(ellipse_90%_55%_at_50%_65%,_rgba(94,45,154,0.22)_0%,_transparent_72%)] opacity-90" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,6,24,0)_0%,rgba(10,5,18,0.18)_45%,rgba(6,3,12,0.42)_100%)]" />
 
-      <main className="relative z-10 mx-auto flex max-w-[700px] flex-col items-center px-6 pb-24 pt-20 text-center md:pt-24">
-        <div className="mb-10 motion-reduce:animate-none">
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-24 pt-24 md:px-10 md:pb-28 md:pt-28">
+        <div className="mb-14 flex items-center gap-3 self-start md:mb-16">
           <img
             src={SIGIL_SRC}
             alt=""
-            width={224}
-            height={224}
-            className="mx-auto h-52 w-52 rounded-full shadow-2xl shadow-purple-600/30 ring-1 ring-[#d4af37]/25 motion-safe:animate-sigil-soft md:h-56 md:w-56"
+            width={42}
+            height={42}
+            className="h-10 w-10 rounded-full ring-1 ring-white/20"
           />
+          <span className="text-base font-medium tracking-tight text-[#f6f0ff] md:text-lg">
+            Spiral Ascension
+          </span>
         </div>
 
-        <h1 className="mb-20 text-5xl font-bold tracking-tight text-[#f5f3ff] md:text-6xl">
-          The Boy Who Knew
-        </h1>
+        <div className="mx-auto flex w-full max-w-[700px] flex-1 flex-col items-center text-center">
+          <div className="mb-16 motion-reduce:animate-none">
+            <div className="rounded-full bg-[radial-gradient(circle,_rgba(167,139,250,0.28)_0%,_rgba(167,139,250,0.1)_42%,_transparent_72%)] p-5 md:p-6">
+              <img
+                src={SIGIL_SRC}
+                alt=""
+                width={260}
+                height={260}
+                className="mx-auto h-[220px] w-[220px] rounded-full ring-1 ring-white/20 motion-safe:animate-sigil-soft md:h-[260px] md:w-[260px]"
+              />
+            </div>
+          </div>
 
-        <div className="w-full space-y-10 text-xl leading-[1.75] text-white/85 md:text-2xl">
-          <p>{STORY_P1}</p>
-          <p>{STORY_P2}</p>
-          <p>{STORY_P3}</p>
-        </div>
+          <h1 className="mb-16 text-[clamp(3rem,7vw,4rem)] font-bold leading-none tracking-tight text-white">
+            The Boy Who Knew
+          </h1>
 
-        <div className="mt-14 flex w-full flex-col items-center gap-8">
-          <button
-            type="button"
-            onClick={() => openModal('signup')}
-            className="inline-flex min-w-[12rem] items-center justify-center rounded-lg border-2 border-[#d4af37]/80 bg-gradient-to-r from-purple-700 to-purple-900 px-10 py-4 text-lg font-semibold tracking-wide text-white shadow-lg shadow-purple-900/40 transition hover:from-purple-600 hover:to-purple-800"
-          >
-            Enter
-          </button>
+          <div className="w-full max-w-[680px] space-y-10 text-[clamp(1.25rem,2.4vw,1.5rem)] leading-[1.72] text-[#f3edf9]">
+            <p>{STORY_P1}</p>
+            <p>{STORY_P2}</p>
+            <p>{STORY_P3}</p>
+          </div>
 
-          <p className="text-sm text-white/65">
-            Already walking with us?{' '}
+          <div className="mt-16 flex w-full flex-col items-center gap-5 pb-6">
             <button
               type="button"
-              onClick={() => openModal('signin')}
-              className="font-medium text-[#e8d5a3] underline-offset-4 transition hover:text-[#f5ebd4] hover:underline"
+              onClick={() => navigate('/subscribe')}
+              className="inline-flex min-w-[13rem] items-center justify-center rounded-xl border border-[#d4af37]/75 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-4 text-xl font-bold tracking-wide text-white shadow-[0_0_28px_rgba(150,70,255,0.28)] transition hover:brightness-110 md:text-2xl"
             >
-              Sign in
+              Enter
             </button>
-          </p>
+
+            <p className="text-sm text-[#e9def6]/72 md:text-base">
+              Already walking with us?{' '}
+              <button
+                type="button"
+                onClick={openModal}
+                className="font-medium text-[#efe6ff] underline-offset-4 transition hover:text-white hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
         </div>
       </main>
 
@@ -218,37 +199,10 @@ export default function EntryPage() {
               Account access
             </h2>
             <p className="mb-6 text-center text-sm text-purple-200/90">
-              Same email as checkout helps your subscription unlock the app.
+              Already a member or using a gifted pass? Sign in here with the email tied to your access.
             </p>
 
-            <div className="mb-6 flex rounded-lg border border-purple-600/40 bg-[#12081f]/60 p-1 text-sm font-semibold">
-              <button
-                type="button"
-                className={`flex-1 rounded-md py-2 transition ${
-                  mode === 'signup' ? 'bg-purple-700 text-white shadow' : 'text-purple-200 hover:text-white'
-                }`}
-                onClick={() => {
-                  setMode('signup');
-                  resetFeedback();
-                }}
-              >
-                Sign up
-              </button>
-              <button
-                type="button"
-                className={`flex-1 rounded-md py-2 transition ${
-                  mode === 'signin' ? 'bg-purple-700 text-white shadow' : 'text-purple-200 hover:text-white'
-                }`}
-                onClick={() => {
-                  setMode('signin');
-                  resetFeedback();
-                }}
-              >
-                Sign in
-              </button>
-            </div>
-
-            <form onSubmit={mode === 'signin' ? handleSignIn : handleSignUp} className="space-y-4">
+            <form onSubmit={handleSignIn} className="space-y-4">
               <div>
                 <label htmlFor={emailId} className="mb-1 block text-sm font-medium text-purple-200">
                   Email
@@ -271,7 +225,7 @@ export default function EntryPage() {
                 <input
                   id={passwordId}
                   type="password"
-                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  autoComplete="current-password"
                   required
                   minLength={6}
                   value={password}
@@ -285,9 +239,9 @@ export default function EntryPage() {
                 disabled={loading}
                 className="w-full rounded-lg border-2 border-[#d4af37] bg-gradient-to-r from-purple-700 to-purple-900 px-6 py-3 font-semibold text-white shadow-lg shadow-purple-900/40 transition hover:from-purple-600 hover:to-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Begin'}
+                {loading ? 'Please wait…' : 'Sign in'}
               </button>
-              <p className="pt-1 text-center text-sm text-purple-200/90">7 days free. Then $3.33/month.</p>
+              <p className="pt-1 text-center text-sm text-purple-200/90">New here? Choose Enter to start checkout first.</p>
               <p className="text-center text-sm text-purple-200/85">
                 <Link to="/auth/forgot" className="font-semibold text-[#d4af37] underline-offset-4 hover:underline">
                   Forgot password?
@@ -297,11 +251,6 @@ export default function EntryPage() {
               {error ? (
                 <p className="mt-3 text-center text-sm text-red-300" role="alert">
                   {error}
-                </p>
-              ) : null}
-              {message ? (
-                <p className="mt-3 text-center text-sm text-purple-100/90" role="status">
-                  {message}
                 </p>
               ) : null}
             </form>

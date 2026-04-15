@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createCheckoutSession } from '@/lib/stripeApi';
+import { createCheckoutSession } from '@/lib/billingApi';
 
 export default function SubscribePage() {
   const [email, setEmail] = useState('');
@@ -8,10 +8,15 @@ export default function SubscribePage() {
 
   const handleStartTrial = async () => {
     setError(null);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError('Email is required before checkout so we can attach your membership to the right account.');
+      return;
+    }
     setLoading(true);
     try {
       const response = await createCheckoutSession({
-        email: email.trim() || undefined,
+        email: trimmedEmail,
       });
       window.location.href = response.url;
     } catch (e) {
@@ -30,15 +35,16 @@ export default function SubscribePage() {
           <p className="mb-6 text-center text-[#e8e8f0]/90 leading-relaxed">
             Start with a <span className="font-semibold text-[#d4af37]">7-day free trial</span>, then{' '}
             <span className="font-semibold text-white">$3.33/month</span>. A card is required up front
-            to begin your trial.
+            to begin your trial. This email will become the one you confirm for app access after checkout.
           </p>
           <label className="mb-2 block text-sm font-medium text-purple-200" htmlFor="subscribe-email">
-            Email (optional)
+            Email
           </label>
           <input
             id="subscribe-email"
             type="email"
             autoComplete="email"
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
@@ -58,7 +64,7 @@ export default function SubscribePage() {
             </p>
           ) : null}
           <p className="mt-6 text-center text-xs text-purple-200/80 leading-relaxed">
-            Cancel anytime during the trial to avoid billing.
+            Use the same email you want tied to your membership. Cancel anytime during the trial to avoid billing.
           </p>
         </div>
       </main>
