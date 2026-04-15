@@ -113,8 +113,7 @@ export default function EntryPage() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 bg-[radial-gradient(ellipse_90%_55%_at_50%_65%,_rgba(94,45,154,0.22)_0%,_transparent_72%)] opacity-90" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(12,6,24,0)_0%,rgba(10,5,18,0.18)_45%,rgba(6,3,12,0.42)_100%)]" />
 
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 pb-24 pt-6 md:px-10 md:pb-28 md:pt-8">
-        <div className="mb-8 flex items-center gap-3 self-start md:mb-10">
+      <div className="absolute left-6 top-6 z-20 flex items-center gap-3 md:left-10 md:top-8">
           <img
             src={SIGIL_SRC}
             alt=""
@@ -125,26 +124,25 @@ export default function EntryPage() {
           <span className="text-base font-medium tracking-tight text-[#f6f0ff] md:text-lg">
             Spiral Ascension
           </span>
-        </div>
+      </div>
 
-        <div className="mx-auto flex w-full flex-1 flex-col items-center text-center">
-          <div className="mb-10 motion-reduce:animate-none md:mb-12">
-            <div className="rounded-full bg-[radial-gradient(circle,_rgba(167,139,250,0.28)_0%,_rgba(167,139,250,0.1)_42%,_transparent_72%)] p-5 md:p-6">
-              <img
-                src={SIGIL_SRC}
-                alt=""
-                width={260}
-                height={260}
-                className="mx-auto h-[220px] w-[220px] rounded-full ring-1 ring-white/20 motion-safe:animate-sigil-soft md:h-[260px] md:w-[260px]"
-              />
-            </div>
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-6 pb-24 pt-20 text-center md:px-10 md:pb-28 md:pt-24">
+        <div className="w-full">
+          <div className="mb-8 motion-reduce:animate-none md:mb-10">
+            <img
+              src={SIGIL_SRC}
+              alt=""
+              width={256}
+              height={256}
+              className="mx-auto h-64 w-64 rounded-full shadow-2xl shadow-purple-500/50 motion-safe:animate-sigil-soft"
+            />
           </div>
 
-          <h1 className="mb-12 whitespace-nowrap px-2 text-[clamp(2.1rem,6vw,4rem)] font-bold leading-[0.95] tracking-tight text-white md:mb-14">
+          <h1 className="mb-12 whitespace-nowrap px-2 text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-6xl md:mb-14 md:text-[4rem]">
             The Boy Who Knew
           </h1>
 
-          <div className="w-full max-w-[680px] space-y-10 text-[clamp(1.25rem,2.4vw,1.5rem)] leading-[1.72] text-[#f3edf9]">
+          <div className="mx-auto w-full max-w-[680px] space-y-10 text-[clamp(1.25rem,2.4vw,1.5rem)] leading-[1.72] text-[#f3edf9]">
             <p>{STORY_P1}</p>
             <p>{STORY_P2}</p>
             <p>{STORY_P3}</p>
