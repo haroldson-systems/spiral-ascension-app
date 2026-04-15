@@ -126,7 +126,7 @@ export default function EntryPage() {
           </span>
       </div>
 
-      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-6 pb-24 pt-20 text-center md:px-10 md:pb-28 md:pt-24">
+      <main className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center px-6 pb-24 pt-0 text-center md:px-10 md:pb-28 md:pt-0">
         <div className="w-full">
           <div className="mb-8 motion-reduce:animate-none md:mb-10">
             <img
