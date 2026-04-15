@@ -12,7 +12,6 @@ from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
 import requests
 import stripe
-from stripe.error import SignatureVerificationError
 
 
 ROOT_DIR = Path(__file__).parent
@@ -620,8 +619,10 @@ async def billing_webhook(request: Request):
         )
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
-    except SignatureVerificationError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as exc:
+        if exc.__class__.__name__ == "SignatureVerificationError":
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        raise
 
     event_type = event["type"]
     data_object = event["data"]["object"]
