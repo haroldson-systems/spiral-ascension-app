@@ -139,8 +139,16 @@
   @apply my-6 aspect-video w-full overflow-hidden rounded-2xl border border-purple-700/50 bg-black/30;
 }
 
+.rich-editor {
+  position: relative;
+  overflow: visible;
+}
+
 .rich-editor .ql-toolbar {
   @apply border-0 border-b border-purple-700/50 bg-purple-950/80;
+  position: relative;
+  z-index: 30;
+  overflow: visible;
 }
 
 .rich-editor .ql-container {
@@ -173,6 +181,14 @@
 .rich-editor .ql-picker-options {
   background: #2e1065;
   border-color: rgba(168, 85, 247, 0.4);
+  z-index: 40;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+}
+
+.rich-editor .ql-picker-item {
+  cursor: pointer;
 }
 
 .rich-editor .ql-snow .ql-picker.ql-expanded .ql-picker-label,

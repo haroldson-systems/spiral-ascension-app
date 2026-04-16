@@ -34,7 +34,7 @@ export default function RichTextEditor({
   placeholder = 'Write here...',
 }: RichTextEditorProps) {
   return (
-    <div className="rich-editor overflow-hidden rounded-xl border border-purple-700/50 bg-purple-900/40">
+    <div className="rich-editor rounded-xl border border-purple-700/50 bg-purple-900/40">
       <ReactQuill
         theme="snow"
         value={value}
