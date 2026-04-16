@@ -6,11 +6,6 @@ import {
   legacyPracticeImages,
 } from '@/data/practices';
 
-const curatedDirectChildrenParents = new Set([
-  'breathwork-compendium',
-  'resonance-gate',
-]);
-
 function mergeById<T extends { id: string }>(fallback: T[], api: T[]) {
   const fallbackIds = new Set(fallback.map((item) => item.id));
   const apiById = new Map(api.map((item) => [item.id, item]));
@@ -98,11 +93,7 @@ export function usePracticesData() {
   );
   const mergedVariants = mergeById(
     fallbackVariants,
-    (variantsQuery.data ?? fallbackVariants).filter(
-      (variant) =>
-        fallbackVariants.some((fallback) => fallback.id === variant.id) ||
-        !curatedDirectChildrenParents.has(variant.parentId)
-    )
+    variantsQuery.data ?? fallbackVariants
   );
 
   const practices = normalizePractices(mergedPractices);

@@ -32,6 +32,8 @@ const emptyVariant: PracticeVariant = {
   image: '',
   description: '',
   startLabel: 'Start',
+  subtitle: '',
+  body: '',
   kind: '',
   creator: '',
   externalUrl: '',
@@ -177,6 +179,8 @@ export default function AdminPractices() {
     const payload: PracticeVariant = {
       ...variantForm,
       parentId: selectedPracticeId,
+      subtitle: variantForm.subtitle?.trim() || undefined,
+      body: variantForm.body?.trim() || undefined,
       kind: variantForm.kind?.trim() || undefined,
       creator: variantForm.creator?.trim() || undefined,
       externalUrl: variantForm.externalUrl?.trim() || undefined,
@@ -493,6 +497,14 @@ export default function AdminPractices() {
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
                       />
                     </label>
+                    <label className="text-sm text-purple-200 md:col-span-2">
+                      Subtitle
+                      <input
+                        value={variantForm.subtitle ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, subtitle: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
                     <label className="text-sm text-purple-200">
                       Category
                       <input
@@ -636,6 +648,14 @@ export default function AdminPractices() {
                         value={variantForm.description}
                         onChange={(event) => setVariantForm({ ...variantForm, description: event.target.value })}
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm min-h-[90px]"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200 md:col-span-2">
+                      Body / Long Content
+                      <textarea
+                        value={variantForm.body ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, body: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm min-h-[220px]"
                       />
                     </label>
                   </div>

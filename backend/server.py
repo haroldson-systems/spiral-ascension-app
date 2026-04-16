@@ -94,6 +94,8 @@ class PracticeVariant(BaseModel):
     image: str
     description: str
     startLabel: str
+    subtitle: Optional[str] = None
+    body: Optional[str] = None
     kind: Optional[str] = None
     creator: Optional[str] = None
     externalUrl: Optional[str] = None
