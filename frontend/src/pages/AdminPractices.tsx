@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Practice, PracticeVariant, practices as fallbackPractices, practiceVariants as fallbackVariants } from '@/data/practices';
 import { SpiralModule, spiralChapters as fallbackModules } from '@/data/spiralChapters';
@@ -59,6 +59,46 @@ const emptyModule: SpiralModule = {
   tier: undefined,
 };
 
+function normalizePracticeForm(practice: Practice): Practice {
+  return {
+    ...practice,
+    subtitle: practice.subtitle ?? '',
+  };
+}
+
+function normalizeVariantForm(
+  variant: PracticeVariant,
+  fallbackParentId?: string | null
+): PracticeVariant {
+  return {
+    ...variant,
+    parentId: variant.parentId ?? fallbackParentId ?? '',
+    subtitle: variant.subtitle ?? '',
+    body: variant.body ?? '',
+    kind: variant.kind ?? '',
+    creator: variant.creator ?? '',
+    externalUrl: variant.externalUrl ?? '',
+    tags: variant.tags ?? [],
+    mediaUrl: variant.mediaUrl ?? '',
+    audioUrl: variant.audioUrl ?? '',
+    mediaType: variant.mediaType,
+    supportState: variant.supportState ?? '',
+    frequency: variant.frequency ?? '',
+    credit: variant.credit ?? '',
+    sourceUrl: variant.sourceUrl ?? '',
+  };
+}
+
+function normalizeModuleForm(module: SpiralModule): SpiralModule {
+  return {
+    ...module,
+    subtitle: module.subtitle ?? '',
+    image: module.image ?? '',
+    image_feminine: module.image_feminine ?? '',
+    image_masculine: module.image_masculine ?? '',
+  };
+}
+
 export default function AdminPractices() {
   const { practices, variants, refetchPractices, refetchVariants } = usePracticesData();
   const { modules, refetchModules } = useSpiralData();
@@ -72,6 +112,9 @@ export default function AdminPractices() {
   const [adminToken, setAdminToken] = useState('');
   const [isUpdatingMaintenance, setIsUpdatingMaintenance] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const previousPracticeIdRef = useRef<string | null>(null);
+  const previousVariantIdRef = useRef<string | null>(null);
+  const previousModuleIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
@@ -83,50 +126,42 @@ export default function AdminPractices() {
   }, []);
 
   useEffect(() => {
+    if (previousPracticeIdRef.current === selectedPracticeId) {
+      return;
+    }
+    previousPracticeIdRef.current = selectedPracticeId;
     const practice = practices.find((item) => item.id === selectedPracticeId);
     if (practice) {
-      setPracticeForm({ ...practice, subtitle: practice.subtitle ?? '' });
+      setPracticeForm(normalizePracticeForm(practice));
     } else {
       setPracticeForm(emptyPractice);
     }
+    previousVariantIdRef.current = null;
     setSelectedVariantId(null);
-    setVariantForm(emptyVariant);
+    setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
   }, [selectedPracticeId, practices]);
 
   useEffect(() => {
+    if (previousVariantIdRef.current === selectedVariantId) {
+      return;
+    }
+    previousVariantIdRef.current = selectedVariantId;
     const variant = variants.find((item) => item.id === selectedVariantId);
     if (variant) {
-      setVariantForm({
-        ...variant,
-        subtitle: variant.subtitle ?? '',
-        body: variant.body ?? '',
-        kind: variant.kind ?? '',
-        creator: variant.creator ?? '',
-        externalUrl: variant.externalUrl ?? '',
-        tags: variant.tags ?? [],
-        mediaUrl: variant.mediaUrl ?? '',
-        audioUrl: variant.audioUrl ?? '',
-        mediaType: variant.mediaType,
-        supportState: variant.supportState ?? '',
-        frequency: variant.frequency ?? '',
-        credit: variant.credit ?? '',
-        sourceUrl: variant.sourceUrl ?? '',
-      });
+      setVariantForm(normalizeVariantForm(variant, selectedPracticeId));
     } else {
       setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
     }
   }, [selectedPracticeId, selectedVariantId, variants]);
 
   useEffect(() => {
+    if (previousModuleIdRef.current === selectedModuleId) {
+      return;
+    }
+    previousModuleIdRef.current = selectedModuleId;
     const module = modules.find((item) => item.id === selectedModuleId);
     if (module) {
-      setModuleForm({
-        ...module,
-        subtitle: module.subtitle ?? '',
-        image: module.image ?? '',
-        image_feminine: module.image_feminine ?? '',
-        image_masculine: module.image_masculine ?? '',
-      });
+      setModuleForm(normalizeModuleForm(module));
     } else {
       setModuleForm(emptyModule);
     }
@@ -141,22 +176,7 @@ export default function AdminPractices() {
     const variant = variants.find((item) => item.id === variantId);
     setSelectedVariantId(variantId);
     if (!variant) return;
-    setVariantForm({
-      ...variant,
-      subtitle: variant.subtitle ?? '',
-      body: variant.body ?? '',
-      kind: variant.kind ?? '',
-      creator: variant.creator ?? '',
-      externalUrl: variant.externalUrl ?? '',
-      tags: variant.tags ?? [],
-      mediaUrl: variant.mediaUrl ?? '',
-      audioUrl: variant.audioUrl ?? '',
-      mediaType: variant.mediaType,
-      supportState: variant.supportState ?? '',
-      frequency: variant.frequency ?? '',
-      credit: variant.credit ?? '',
-      sourceUrl: variant.sourceUrl ?? '',
-    });
+    setVariantForm(normalizeVariantForm(variant, selectedPracticeId));
   };
 
   const setStatus = (message: string) => {
