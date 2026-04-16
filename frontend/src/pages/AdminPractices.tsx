@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Practice, PracticeVariant, practices as fallbackPractices, practiceVariants as fallbackVariants } from '@/data/practices';
 import { SpiralModule, spiralChapters as fallbackModules } from '@/data/spiralChapters';
+import RichTextEditor from '@/components/RichTextEditor';
 import { bulkUpsertPractices, bulkUpsertPracticeVariants, deletePractice, deletePracticeVariant, upsertPractice, upsertPracticeVariant } from '@/lib/practicesApi';
 import { bulkUpsertSpiralModules, deleteSpiralModule, upsertSpiralModule } from '@/lib/spiralApi';
 import { updateSiteSettings } from '@/lib/siteSettingsApi';
@@ -95,9 +96,26 @@ export default function AdminPractices() {
   useEffect(() => {
     const variant = variants.find((item) => item.id === selectedVariantId);
     if (variant) {
-      setVariantForm(variant);
+      setVariantForm({
+        ...variant,
+        subtitle: variant.subtitle ?? '',
+        body: variant.body ?? '',
+        kind: variant.kind ?? '',
+        creator: variant.creator ?? '',
+        externalUrl: variant.externalUrl ?? '',
+        tags: variant.tags ?? [],
+        mediaUrl: variant.mediaUrl ?? '',
+        audioUrl: variant.audioUrl ?? '',
+        mediaType: variant.mediaType,
+        supportState: variant.supportState ?? '',
+        frequency: variant.frequency ?? '',
+        credit: variant.credit ?? '',
+        sourceUrl: variant.sourceUrl ?? '',
+      });
+    } else {
+      setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
     }
-  }, [selectedVariantId, variants]);
+  }, [selectedPracticeId, selectedVariantId, variants]);
 
   useEffect(() => {
     const module = modules.find((item) => item.id === selectedModuleId);
@@ -118,6 +136,28 @@ export default function AdminPractices() {
     () => variants.filter((item) => item.parentId === selectedPracticeId),
     [variants, selectedPracticeId]
   );
+
+  const handleSelectVariant = (variantId: string) => {
+    const variant = variants.find((item) => item.id === variantId);
+    setSelectedVariantId(variantId);
+    if (!variant) return;
+    setVariantForm({
+      ...variant,
+      subtitle: variant.subtitle ?? '',
+      body: variant.body ?? '',
+      kind: variant.kind ?? '',
+      creator: variant.creator ?? '',
+      externalUrl: variant.externalUrl ?? '',
+      tags: variant.tags ?? [],
+      mediaUrl: variant.mediaUrl ?? '',
+      audioUrl: variant.audioUrl ?? '',
+      mediaType: variant.mediaType,
+      supportState: variant.supportState ?? '',
+      frequency: variant.frequency ?? '',
+      credit: variant.credit ?? '',
+      sourceUrl: variant.sourceUrl ?? '',
+    });
+  };
 
   const setStatus = (message: string) => {
     setStatusMessage(message);
@@ -467,7 +507,7 @@ export default function AdminPractices() {
                       <button
                         key={variant.id}
                         type="button"
-                        onClick={() => setSelectedVariantId(variant.id)}
+                        onClick={() => handleSelectVariant(variant.id)}
                         className={`w-full text-left rounded-lg border px-3 py-2 text-xs transition ${
                           selectedVariantId === variant.id
                             ? 'border-amber-400/60 bg-purple-800/70'
@@ -652,11 +692,16 @@ export default function AdminPractices() {
                     </label>
                     <label className="text-sm text-purple-200 md:col-span-2">
                       Body / Long Content
-                      <textarea
-                        value={variantForm.body ?? ''}
-                        onChange={(event) => setVariantForm({ ...variantForm, body: event.target.value })}
-                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm min-h-[220px]"
-                      />
+                      <div className="mt-1 space-y-3">
+                        <RichTextEditor
+                          value={variantForm.body ?? ''}
+                          onChange={(value) => setVariantForm({ ...variantForm, body: value })}
+                          placeholder="Write visually here. Paste from Docs, add links, or insert image/video embeds."
+                        />
+                        <p className="text-xs text-purple-300">
+                          Use the toolbar for headings, links, lists, images, and video. Media URL and Audio URL still control the dedicated media section below the entry.
+                        </p>
+                      </div>
                     </label>
                   </div>
                 </div>

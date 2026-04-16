@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
@@ -47,6 +48,25 @@ function getChildCollectionHeading(variantId: string) {
   return 'Explore entries';
 }
 
+function renderEntryBody(body: string) {
+  const trimmedBody = body.trim();
+  const looksLikeHtml = /<\s*[a-z][^>]*>/i.test(trimmedBody);
+  const html = looksLikeHtml ? trimmedBody : ((marked.parse(trimmedBody) as string) ?? '');
+
+  return DOMPurify.sanitize(html, {
+    ADD_TAGS: ['iframe'],
+    ADD_ATTR: [
+      'allow',
+      'allowfullscreen',
+      'frameborder',
+      'scrolling',
+      'target',
+      'rel',
+      'class',
+    ],
+  });
+}
+
 export default function PracticeEntryDetail() {
   const { id } = useParams<{ id: string }>();
   const { practices, variants } = usePracticesData();
@@ -65,9 +85,10 @@ export default function PracticeEntryDetail() {
   );
 
   const bodyHtml = useMemo(() => {
-    if (!variant?.body?.trim()) return '';
-    return marked.parse(variant.body) as string;
-  }, [variant?.body]);
+    const content = variant?.body?.trim() || variant?.description?.trim() || '';
+    if (!content) return '';
+    return renderEntryBody(content);
+  }, [variant?.body, variant?.description]);
 
   const embeddedMediaUrl = useMemo(() => {
     if (!variant?.mediaUrl?.trim()) return null;
@@ -234,8 +255,6 @@ export default function PracticeEntryDetail() {
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {childVariants.map((childVariant) => {
-                const hasNestedChildren = variants.some((item) => item.parentId === childVariant.id);
-                const hasEntryBody = Boolean(childVariant.body?.trim());
                 const useMinimalMeta = variant.id.startsWith('lunar-lore-gate-');
 
                 return (
@@ -244,7 +263,7 @@ export default function PracticeEntryDetail() {
                     practice={childVariant}
                     variant
                     startLabel={childVariant.startLabel}
-                    to={hasNestedChildren || hasEntryBody ? `/practice-entry/${childVariant.id}` : undefined}
+                    to={`/practice-entry/${childVariant.id}`}
                     minimalMeta={useMinimalMeta}
                     onStart={() => handleStart(childVariant.id)}
                   />

@@ -131,6 +131,80 @@
   @apply my-4 ml-6;
 }
 
+.markdown-preview img {
+  @apply rounded-2xl border border-purple-700/50 shadow-lg;
+}
+
+.markdown-preview iframe {
+  @apply my-6 aspect-video w-full overflow-hidden rounded-2xl border border-purple-700/50 bg-black/30;
+}
+
+.rich-editor .ql-toolbar {
+  @apply border-0 border-b border-purple-700/50 bg-purple-950/80;
+}
+
+.rich-editor .ql-container {
+  @apply border-0 bg-transparent text-white;
+  font-family: Inter, sans-serif;
+  min-height: 260px;
+}
+
+.rich-editor .ql-editor {
+  @apply min-h-[260px] text-base leading-relaxed text-purple-100;
+}
+
+.rich-editor .ql-editor.ql-blank::before {
+  color: rgba(216, 180, 254, 0.6);
+  font-style: normal;
+}
+
+.rich-editor .ql-stroke {
+  stroke: #e9d5ff;
+}
+
+.rich-editor .ql-fill {
+  fill: #e9d5ff;
+}
+
+.rich-editor .ql-picker {
+  color: #e9d5ff;
+}
+
+.rich-editor .ql-picker-options {
+  background: #2e1065;
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.rich-editor .ql-snow .ql-picker.ql-expanded .ql-picker-label,
+.rich-editor .ql-snow .ql-picker.ql-expanded .ql-picker-options,
+.rich-editor .ql-snow .ql-picker-label,
+.rich-editor .ql-snow .ql-picker-item,
+.rich-editor .ql-snow .ql-picker-options .ql-picker-item {
+  color: #f5e9ff;
+}
+
+.rich-editor .ql-snow.ql-toolbar button:hover,
+.rich-editor .ql-snow .ql-toolbar button:hover,
+.rich-editor .ql-snow.ql-toolbar button.ql-active,
+.rich-editor .ql-snow .ql-toolbar button.ql-active,
+.rich-editor .ql-snow.ql-toolbar .ql-picker-label:hover,
+.rich-editor .ql-snow .ql-toolbar .ql-picker-label:hover,
+.rich-editor .ql-snow.ql-toolbar .ql-picker-label.ql-active,
+.rich-editor .ql-snow .ql-toolbar .ql-picker-label.ql-active {
+  color: #f59e0b;
+}
+
+.rich-editor .ql-snow.ql-toolbar button:hover .ql-stroke,
+.rich-editor .ql-snow .ql-toolbar button:hover .ql-stroke,
+.rich-editor .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.rich-editor .ql-snow .ql-toolbar button.ql-active .ql-stroke,
+.rich-editor .ql-snow.ql-toolbar .ql-picker-label:hover .ql-stroke,
+.rich-editor .ql-snow .ql-toolbar .ql-picker-label:hover .ql-stroke,
+.rich-editor .ql-snow.ql-toolbar .ql-picker-label.ql-active .ql-stroke,
+.rich-editor .ql-snow .ql-toolbar .ql-picker-label.ql-active .ql-stroke {
+  stroke: #f59e0b;
+}
+
 .line-clamp-2,
 .line-clamp-3,
 .line-clamp-4 {
