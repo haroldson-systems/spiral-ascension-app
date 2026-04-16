@@ -8,7 +8,7 @@ type RichTextEditorProps = {
 };
 
 const toolbarOptions = [
-  [{ header: [1, 2, 3, false] }],
+  [{ header: 1 }, { header: 2 }, { header: 3 }],
   ['bold', 'italic', 'underline', 'blockquote'],
   [{ list: 'ordered' }, { list: 'bullet' }],
   ['link', 'image', 'video'],
