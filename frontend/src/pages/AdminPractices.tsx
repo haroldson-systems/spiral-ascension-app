@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Practice, PracticeVariant, practices as fallbackPractices, practiceVariants as fallbackVariants } from '@/data/practices';
 import { SpiralModule, spiralChapters as fallbackModules } from '@/data/spiralChapters';
 import { bulkUpsertPractices, bulkUpsertPracticeVariants, deletePractice, deletePracticeVariant, upsertPractice, upsertPracticeVariant } from '@/lib/practicesApi';
 import { bulkUpsertSpiralModules, deleteSpiralModule, upsertSpiralModule } from '@/lib/spiralApi';
 import { updateSiteSettings } from '@/lib/siteSettingsApi';
 import { getStoredAdminToken, saveStoredAdminToken } from '@/lib/adminApi';
+import { homeSectionHref } from '@/lib/homeNavigation';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useSpiralData } from '@/hooks/useSpiralData';
@@ -242,9 +244,17 @@ export default function AdminPractices() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0b2e] via-[#3a2563] to-[#1a0b2e] text-white">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-bold">Control Room</h1>
-          <p className="text-purple-200">Edit practices, variants, and card copy without code changes.</p>
+        <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">Control Room</h1>
+            <p className="text-purple-200">Edit practices, variants, and card copy without code changes.</p>
+          </div>
+          <Link
+            to={homeSectionHref('spiral')}
+            className="inline-flex items-center justify-center rounded-lg border border-purple-500/40 px-4 py-2 text-sm font-semibold text-purple-100 transition hover:bg-purple-900/50"
+          >
+            Back to App
+          </Link>
         </header>
 
         <section className="rounded-2xl border border-purple-700/40 bg-purple-950/60 p-6 space-y-4">

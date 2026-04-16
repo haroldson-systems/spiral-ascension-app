@@ -1,6 +1,37 @@
 import { supabase } from '@/lib/supabaseClient';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
+const DEFAULT_FETCH_TIMEOUT_MS = 8000;
+
+function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+  const { signal: userSignal, ...rest } = init;
+
+  if (userSignal) {
+    if (userSignal.aborted) {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      userSignal.addEventListener(
+        'abort',
+        () => {
+          window.clearTimeout(timeoutId);
+          controller.abort();
+        },
+        { once: true },
+      );
+    }
+  }
+
+  return fetch(input, { ...rest, signal: controller.signal }).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
+}
 
 export interface AdminAccessStatus {
   authorized: boolean;
@@ -60,7 +91,7 @@ export async function buildAdminHeaders(initialHeaders?: HeadersInit): Promise<H
 
 export async function adminRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = await buildAdminHeaders(options.headers);
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetchWithTimeout(`${API_BASE}${path}`, {
     ...options,
     headers,
   });

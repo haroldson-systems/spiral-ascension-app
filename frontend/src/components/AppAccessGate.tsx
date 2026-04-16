@@ -13,9 +13,23 @@ function GateShell({ children }: { children: ReactNode }) {
 }
 
 export function AppAccessGate({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated, userEmail, hasAccess, lastKnownHasAccess } = useMembershipAccess();
+  const {
+    isLoading,
+    isAuthenticated,
+    userEmail,
+    hasAccess,
+    hasOwnerAccess,
+    isCheckingOwnerAccess,
+    lastKnownHasAccess,
+    lastKnownOwnerAccess,
+  } = useMembershipAccess();
 
-  if (isLoading || (isAuthenticated && lastKnownHasAccess && !hasAccess)) {
+  const shouldHoldNeutralGate =
+    isLoading ||
+    isCheckingOwnerAccess ||
+    (isAuthenticated && (lastKnownHasAccess || lastKnownOwnerAccess) && !(hasAccess || hasOwnerAccess));
+
+  if (shouldHoldNeutralGate) {
     return (
       <GateShell>
         <p className="text-sm uppercase tracking-[0.3em] text-purple-300">Checking access...</p>
@@ -52,7 +66,7 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!hasAccess) {
+  if (!(hasAccess || hasOwnerAccess)) {
     return (
       <GateShell>
         <div className="w-full max-w-md space-y-5 rounded-3xl border border-purple-700/40 bg-purple-950/40 p-8 shadow-2xl backdrop-blur">
