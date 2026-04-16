@@ -106,8 +106,6 @@ export default function PracticeDetail() {
           {practiceVariants.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {practiceVariants.map((variant) => {
-                const hasNestedChildren = variants.some((item) => item.parentId === variant.id);
-                const hasEntryBody = Boolean(variant.body?.trim());
                 const useMinimalMeta = practice.id.startsWith('lunar-lore-gate-');
 
                 return (
@@ -116,7 +114,7 @@ export default function PracticeDetail() {
                   practice={variant}
                   variant
                   startLabel={variant.startLabel}
-                  to={hasNestedChildren || hasEntryBody ? `/practice-entry/${variant.id}` : undefined}
+                  to={`/practice-entry/${variant.id}`}
                   minimalMeta={useMinimalMeta}
                   onStart={() => handleStart(variant.id)}
                 />
