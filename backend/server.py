@@ -49,6 +49,30 @@ def get_single_row(response):
     data = get_data(response) or []
     return data[0] if data else None
 
+
+def is_missing_table_error(exc: Exception, table_name: str) -> bool:
+    if not isinstance(exc, PostgrestAPIError):
+        return False
+    message = str(exc)
+    return (
+        "PGRST205" in message
+        and (
+            f"public.{table_name}" in message
+            or f"'{table_name}'" in message
+            or table_name in message
+        )
+    )
+
+
+def content_tables_not_ready_error() -> HTTPException:
+    return HTTPException(
+        status_code=503,
+        detail=(
+            "Content tables are not provisioned yet. "
+            "Run supabase_content_migration.sql in Supabase, then use Seed Defaults in the Control Room."
+        ),
+    )
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -88,6 +112,7 @@ class PracticeVariant(BaseModel):
     id: str
     parentId: str
     title: str
+    sortDate: Optional[str] = None
     category: str
     duration: str
     level: str
@@ -696,8 +721,13 @@ async def get_status_checks():
 
 @api_router.get("/practices", response_model=List[Practice])
 async def list_practices():
-    response = supabase.table("practices").select("*").order("id", desc=False).execute()
-    return get_data(response) or []
+    try:
+        response = supabase.table("practices").select("*").order("id", desc=False).execute()
+        return get_data(response) or []
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practices"):
+            return []
+        raise
 
 @api_router.get("/practices/{practice_id}", response_model=Practice)
 async def get_practice(practice_id: str):
@@ -717,16 +747,26 @@ async def get_practice(practice_id: str):
 async def upsert_practice(practice: Practice, request: Request):
     require_admin(request)
     doc = practice.model_dump()
-    response = supabase.table("practices").upsert(doc, on_conflict="id").execute()
-    data = get_data(response)
-    return data[0] if data else practice
+    try:
+        response = supabase.table("practices").upsert(doc, on_conflict="id").execute()
+        data = get_data(response)
+        return data[0] if data else practice
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practices"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.post("/practices/bulk", response_model=List[Practice])
 async def upsert_practices_bulk(practices: List[Practice], request: Request):
     require_admin(request)
     docs = [practice.model_dump() for practice in practices]
-    response = supabase.table("practices").upsert(docs, on_conflict="id").execute()
-    return get_data(response) or practices
+    try:
+        response = supabase.table("practices").upsert(docs, on_conflict="id").execute()
+        return get_data(response) or practices
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practices"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.delete("/practices/{practice_id}")
 async def delete_practice(practice_id: str, request: Request):
@@ -737,26 +777,41 @@ async def delete_practice(practice_id: str, request: Request):
 
 @api_router.get("/practice-variants", response_model=List[PracticeVariant])
 async def list_practice_variants(parentId: Optional[str] = Query(default=None)):
-    query = supabase.table("practice_variants").select("*")
-    if parentId:
-        query = query.eq("parentId", parentId)
-    response = query.execute()
-    return get_data(response) or []
+    try:
+        query = supabase.table("practice_variants").select("*")
+        if parentId:
+            query = query.eq("parentId", parentId)
+        response = query.execute()
+        return get_data(response) or []
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practice_variants"):
+            return []
+        raise
 
 @api_router.post("/practice-variants", response_model=PracticeVariant)
 async def upsert_practice_variant(variant: PracticeVariant, request: Request):
     require_admin(request)
     doc = variant.model_dump()
-    response = supabase.table("practice_variants").upsert(doc, on_conflict="id").execute()
-    data = get_data(response)
-    return data[0] if data else variant
+    try:
+        response = supabase.table("practice_variants").upsert(doc, on_conflict="id").execute()
+        data = get_data(response)
+        return data[0] if data else variant
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practice_variants"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.post("/practice-variants/bulk", response_model=List[PracticeVariant])
 async def upsert_practice_variants_bulk(variants: List[PracticeVariant], request: Request):
     require_admin(request)
     docs = [variant.model_dump() for variant in variants]
-    response = supabase.table("practice_variants").upsert(docs, on_conflict="id").execute()
-    return get_data(response) or variants
+    try:
+        response = supabase.table("practice_variants").upsert(docs, on_conflict="id").execute()
+        return get_data(response) or variants
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "practice_variants"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.delete("/practice-variants/{variant_id}")
 async def delete_practice_variant(variant_id: str, request: Request):
@@ -772,7 +827,9 @@ async def list_spiral_modules(tier: Optional[int] = Query(default=None)):
             query = query.eq("tier", tier)
         response = query.execute()
         return get_data(response) or []
-    except PostgrestAPIError:
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "spiral_modules"):
+            return []  # Table may not exist yet; frontend uses local fallback
         return []  # Table may not exist yet; frontend uses local fallback
 
 @api_router.get("/spiral-modules/{module_id}", response_model=SpiralModule)
@@ -793,16 +850,26 @@ async def get_spiral_module(module_id: str):
 async def upsert_spiral_module(module: SpiralModule, request: Request):
     require_admin(request)
     doc = module.model_dump()
-    response = supabase.table("spiral_modules").upsert(doc, on_conflict="id").execute()
-    data = get_data(response)
-    return data[0] if data else module
+    try:
+        response = supabase.table("spiral_modules").upsert(doc, on_conflict="id").execute()
+        data = get_data(response)
+        return data[0] if data else module
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "spiral_modules"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.post("/spiral-modules/bulk", response_model=List[SpiralModule])
 async def upsert_spiral_modules_bulk(modules: List[SpiralModule], request: Request):
     require_admin(request)
     docs = [module.model_dump() for module in modules]
-    response = supabase.table("spiral_modules").upsert(docs, on_conflict="id").execute()
-    return get_data(response) or modules
+    try:
+        response = supabase.table("spiral_modules").upsert(docs, on_conflict="id").execute()
+        return get_data(response) or modules
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "spiral_modules"):
+            raise content_tables_not_ready_error()
+        raise
 
 @api_router.delete("/spiral-modules/{module_id}")
 async def delete_spiral_module(module_id: str, request: Request):

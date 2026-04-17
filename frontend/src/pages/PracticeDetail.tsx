@@ -3,6 +3,7 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { homeSectionHref } from '@/lib/homeNavigation';
+import { compareVariantSortDateDesc } from '@/lib/practiceVariantMeta';
 
 function getCollectionHeading(practiceId: string) {
   if (practiceId === 'breathwork-compendium') {
@@ -40,6 +41,10 @@ export default function PracticeDetail() {
   }
 
   const practiceVariants = variants.filter((variant) => variant.parentId === practice.id);
+  const orderedPracticeVariants =
+    practice.id === 'field-notes'
+      ? [...practiceVariants].sort(compareVariantSortDateDesc)
+      : practiceVariants;
 
   const handleStart = (variantId: string) => {
     try {
@@ -105,7 +110,7 @@ export default function PracticeDetail() {
 
           {practiceVariants.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {practiceVariants.map((variant) => {
+              {orderedPracticeVariants.map((variant) => {
                 const useMinimalMeta = practice.id.startsWith('lunar-lore-gate-');
 
                 return (

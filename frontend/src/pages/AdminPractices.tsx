@@ -8,6 +8,7 @@ import { bulkUpsertSpiralModules, deleteSpiralModule, upsertSpiralModule } from 
 import { updateSiteSettings } from '@/lib/siteSettingsApi';
 import { getStoredAdminToken, saveStoredAdminToken } from '@/lib/adminApi';
 import { homeSectionHref } from '@/lib/homeNavigation';
+import { extractSortDateFromTags, mergeTagsWithSortDate } from '@/lib/practiceVariantMeta';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useSpiralData } from '@/hooks/useSpiralData';
@@ -27,6 +28,7 @@ const emptyVariant: PracticeVariant = {
   id: '',
   parentId: '',
   title: '',
+  sortDate: '',
   category: '',
   duration: '',
   level: '',
@@ -73,6 +75,7 @@ function normalizeVariantForm(
   return {
     ...variant,
     parentId: variant.parentId ?? fallbackParentId ?? '',
+    sortDate: variant.sortDate ?? extractSortDateFromTags(variant.tags) ?? '',
     subtitle: variant.subtitle ?? '',
     body: variant.body ?? '',
     kind: variant.kind ?? '',
@@ -212,19 +215,27 @@ export default function AdminPractices() {
       setStatus('Practice requires an id and title.');
       return;
     }
-    await upsertPractice({ ...practiceForm, subtitle: practiceForm.subtitle?.trim() || undefined });
-    await refetchPractices();
-    setSelectedPracticeId(practiceForm.id);
-    setStatus('Practice saved.');
+    try {
+      await upsertPractice({ ...practiceForm, subtitle: practiceForm.subtitle?.trim() || undefined });
+      await refetchPractices();
+      setSelectedPracticeId(practiceForm.id);
+      setStatus('Practice saved.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to save practice.');
+    }
   };
 
   const handleDeletePractice = async () => {
     if (!selectedPracticeId) return;
-    await deletePractice(selectedPracticeId);
-    await refetchPractices();
-    await refetchVariants();
-    setSelectedPracticeId(null);
-    setStatus('Practice deleted.');
+    try {
+      await deletePractice(selectedPracticeId);
+      await refetchPractices();
+      await refetchVariants();
+      setSelectedPracticeId(null);
+      setStatus('Practice deleted.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to delete practice.');
+    }
   };
 
   const handleSaveVariant = async () => {
@@ -239,6 +250,7 @@ export default function AdminPractices() {
     const payload: PracticeVariant = {
       ...variantForm,
       parentId: selectedPracticeId,
+      sortDate: variantForm.sortDate?.trim() || undefined,
       subtitle: variantForm.subtitle?.trim() || undefined,
       body: variantForm.body?.trim() || undefined,
       kind: variantForm.kind?.trim() || undefined,
@@ -251,31 +263,46 @@ export default function AdminPractices() {
       frequency: variantForm.frequency?.trim() || undefined,
       credit: variantForm.credit?.trim() || undefined,
       sourceUrl: variantForm.sourceUrl?.trim() || undefined,
-      tags: variantForm.tags && variantForm.tags.length > 0 ? variantForm.tags : undefined,
+      tags: mergeTagsWithSortDate(
+        variantForm.tags && variantForm.tags.length > 0 ? variantForm.tags : undefined,
+        variantForm.sortDate
+      ),
     };
-    await upsertPracticeVariant(payload);
-    await refetchVariants();
-    setSelectedVariantId(variantForm.id);
-    setStatus('Variant saved.');
+    try {
+      await upsertPracticeVariant(payload);
+      await refetchVariants();
+      setSelectedVariantId(variantForm.id);
+      setStatus('Variant saved.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to save variant.');
+    }
   };
 
   const handleDeleteVariant = async () => {
     if (!selectedVariantId) return;
-    await deletePracticeVariant(selectedVariantId);
-    await refetchVariants();
-    setSelectedVariantId(null);
-    setVariantForm(emptyVariant);
-    setStatus('Variant deleted.');
+    try {
+      await deletePracticeVariant(selectedVariantId);
+      await refetchVariants();
+      setSelectedVariantId(null);
+      setVariantForm(emptyVariant);
+      setStatus('Variant deleted.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to delete variant.');
+    }
   };
 
   const handleSeedDefaults = async () => {
-    await bulkUpsertPractices(fallbackPractices);
-    await bulkUpsertPracticeVariants(fallbackVariants);
-    await refetchPractices();
-    await refetchVariants();
-    await bulkUpsertSpiralModules(fallbackModules);
-    await refetchModules();
-    setStatus('Defaults seeded to the database.');
+    try {
+      await bulkUpsertPractices(fallbackPractices);
+      await bulkUpsertPracticeVariants(fallbackVariants);
+      await refetchPractices();
+      await refetchVariants();
+      await bulkUpsertSpiralModules(fallbackModules);
+      await refetchModules();
+      setStatus('Defaults seeded to the database.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to seed defaults.');
+    }
   };
 
   const handleSaveModule = async () => {
@@ -291,18 +318,26 @@ export default function AdminPractices() {
       image_masculine: moduleForm.image_masculine?.trim() || undefined,
       tier: moduleForm.tier === undefined || moduleForm.tier === null ? undefined : Number(moduleForm.tier),
     };
-    await upsertSpiralModule(payload);
-    await refetchModules();
-    setSelectedModuleId(moduleForm.id);
-    setStatus('Spiral module saved.');
+    try {
+      await upsertSpiralModule(payload);
+      await refetchModules();
+      setSelectedModuleId(moduleForm.id);
+      setStatus('Spiral module saved.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to save spiral module.');
+    }
   };
 
   const handleDeleteModule = async () => {
     if (!selectedModuleId) return;
-    await deleteSpiralModule(selectedModuleId);
-    await refetchModules();
-    setSelectedModuleId(null);
-    setStatus('Spiral module deleted.');
+    try {
+      await deleteSpiralModule(selectedModuleId);
+      await refetchModules();
+      setSelectedModuleId(null);
+      setStatus('Spiral module deleted.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Unable to delete spiral module.');
+    }
   };
 
   return (
@@ -554,6 +589,15 @@ export default function AdminPractices() {
                       <input
                         value={variantForm.title}
                         onChange={(event) => setVariantForm({ ...variantForm, title: event.target.value })}
+                        className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-sm text-purple-200">
+                      Sort / Publish Date
+                      <input
+                        type="datetime-local"
+                        value={variantForm.sortDate ?? ''}
+                        onChange={(event) => setVariantForm({ ...variantForm, sortDate: event.target.value })}
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
                       />
                     </label>

@@ -13,6 +13,7 @@ export interface PracticeVariant {
   id: string;
   parentId: string;
   title: string;
+  sortDate?: string;
   category: string;
   duration: string;
   level: string;
