@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import Index from "./pages/Index";
@@ -36,7 +36,19 @@ const envMaintenanceModeEnabled = String(import.meta.env.VITE_MAINTENANCE_MODE ?
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
-  const navigationType = useNavigationType();
+
+  useEffect(() => {
+    if (!('scrollRestoration' in window.history)) {
+      return;
+    }
+
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
 
   useEffect(() => {
     if (hash) {
@@ -52,12 +64,10 @@ function ScrollToTop() {
       return;
     }
 
-    if (navigationType === 'POP') {
-      return;
-    }
-
-    window.scrollTo(0, 0);
-  }, [pathname, hash, navigationType]);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+  }, [pathname, hash]);
 
   return null;
 }
