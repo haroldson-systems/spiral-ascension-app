@@ -138,17 +138,17 @@ export default function EntryPage() {
             />
           </div>
 
-          <h1 className="mb-12 whitespace-nowrap px-2 text-5xl font-bold leading-[0.95] tracking-tight text-white sm:text-6xl md:mb-14 md:text-[4rem]">
+          <h1 className="mb-10 px-2 text-4xl font-bold leading-[0.95] tracking-tight text-white sm:text-5xl md:mb-14 md:whitespace-nowrap md:text-[4rem]">
             The Boy Who Knew
           </h1>
 
-          <div className="mx-auto w-full max-w-[680px] space-y-10 text-[clamp(1.25rem,2.4vw,1.5rem)] leading-[1.72] text-[#f3edf9]">
+          <div className="mx-auto w-full max-w-[680px] space-y-8 text-[1.05rem] leading-[1.72] text-[#f3edf9] sm:text-[1.2rem] md:space-y-10 md:text-[clamp(1.25rem,2.4vw,1.5rem)]">
             <p>{STORY_P1}</p>
             <p>{STORY_P2}</p>
             <p>{STORY_P3}</p>
           </div>
 
-          <div className="mt-16 flex w-full flex-col items-center gap-5 pb-6">
+          <div className="mt-12 flex w-full flex-col items-center gap-5 pb-6 md:mt-16">
             <button
               type="button"
               onClick={() => navigate('/subscribe')}

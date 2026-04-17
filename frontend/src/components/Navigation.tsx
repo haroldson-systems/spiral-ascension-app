@@ -33,7 +33,14 @@ export default function Navigation() {
               alt="Spiral"
               className="w-10 h-10 rounded-full"
             />
-            <span className="text-[#e8e8f0] font-bold text-xl">Sovereign Spiral</span>
+            <span className="text-lg font-bold text-[#e8e8f0] sm:text-xl">Sovereign Spiral</span>
+          </Link>
+
+          <Link
+            to="/account/password"
+            className="inline-flex items-center rounded-full border border-purple-400/30 bg-white/5 px-4 py-2 text-sm font-medium text-[#e8e8f0] transition-colors hover:bg-white/10 md:hidden"
+          >
+            Account
           </Link>
 
           {/* Navigation Links */}
