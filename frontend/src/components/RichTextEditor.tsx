@@ -1,6 +1,7 @@
-import { useId } from 'react';
+import { useCallback, useId, useMemo, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { normalizeVideoEmbedUrl } from '@/lib/videoEmbeds';
 
 type RichTextEditorProps = {
   value: string;
@@ -27,6 +28,35 @@ export default function RichTextEditor({
   placeholder = 'Write here...',
 }: RichTextEditorProps) {
   const toolbarId = useId().replace(/:/g, '');
+  const quillRef = useRef<ReactQuill | null>(null);
+
+  const handleVideo = useCallback(() => {
+    const rawUrl = window.prompt('Paste a YouTube, Shorts, youtu.be, or Vimeo link.');
+    if (!rawUrl) return;
+
+    const editor = quillRef.current?.getEditor();
+    if (!editor) return;
+
+    const normalizedUrl = normalizeVideoEmbedUrl(rawUrl) ?? rawUrl.trim();
+    if (!normalizedUrl) return;
+
+    const selection = editor.getSelection(true);
+    const insertIndex = selection ? selection.index : editor.getLength();
+    editor.insertEmbed(insertIndex, 'video', normalizedUrl, 'user');
+    editor.setSelection(insertIndex + 1, 0, 'silent');
+  }, []);
+
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: `#${toolbarId}`,
+        handlers: {
+          video: handleVideo,
+        },
+      },
+    }),
+    [handleVideo, toolbarId]
+  );
 
   return (
     <div className="rich-editor rounded-xl border border-purple-700/50 bg-purple-900/40">
@@ -65,11 +95,12 @@ export default function RichTextEditor({
         </span>
       </div>
       <ReactQuill
+        ref={quillRef}
         theme="snow"
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        modules={{ toolbar: { container: `#${toolbarId}` } }}
+        modules={modules}
         formats={formats}
       />
     </div>

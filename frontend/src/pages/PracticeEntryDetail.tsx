@@ -6,35 +6,9 @@ import { marked } from 'marked';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { homeSectionHref } from '@/lib/homeNavigation';
+import { normalizeVideoEmbedUrl } from '@/lib/videoEmbeds';
 
 marked.setOptions({ breaks: true });
-
-function getEmbedUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-
-    if (
-      parsed.hostname.includes('youtube.com') &&
-      parsed.searchParams.get('v')
-    ) {
-      return `https://www.youtube.com/embed/${parsed.searchParams.get('v')}`;
-    }
-
-    if (parsed.hostname === 'youtu.be') {
-      const videoId = parsed.pathname.replace('/', '');
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
-    }
-
-    if (parsed.hostname.includes('vimeo.com')) {
-      const videoId = parsed.pathname.split('/').filter(Boolean).pop();
-      return videoId ? `https://player.vimeo.com/video/${videoId}` : null;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
 
 function getChildCollectionHeading(variantId: string) {
   if (variantId.startsWith('breath-')) {
@@ -92,7 +66,7 @@ export default function PracticeEntryDetail() {
 
   const embeddedMediaUrl = useMemo(() => {
     if (!variant?.mediaUrl?.trim()) return null;
-    return getEmbedUrl(variant.mediaUrl);
+    return normalizeVideoEmbedUrl(variant.mediaUrl);
   }, [variant?.mediaUrl]);
 
   const handleStart = (variantId: string) => {
