@@ -1180,8 +1180,8 @@ app.include_router(api_router)
 
 cors_env = os.environ.get('CORS_ORIGINS', '')
 default_origins = {
-    "http://127.0.0.1:3001",
-    "http://localhost:3001",
+    "https://thespiralascension.com",
+    "https://www.thespiralascension.com",
 }
 allow_origins = {origin.strip() for origin in cors_env.split(',') if origin.strip()}
 allow_origins = allow_origins or default_origins
