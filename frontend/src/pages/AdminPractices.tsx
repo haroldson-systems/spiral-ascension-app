@@ -61,6 +61,46 @@ const emptyModule: SpiralModule = {
   tier: undefined,
 };
 
+const FIELD_NOTES_PRACTICE_ID = 'field-notes';
+const AUTO_FIELD_NOTE_ID_PATTERN = /^fn-\d{4}-\d{2}(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?$/;
+
+function slugifyVariantIdSegment(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+function buildNextFieldNoteId(
+  variants: PracticeVariant[],
+  title = '',
+  selectedVariantId?: string | null
+) {
+  const currentYear = new Date().getFullYear();
+  const highestSequence = variants.reduce((maxValue, variant) => {
+    if (variant.parentId !== FIELD_NOTES_PRACTICE_ID || variant.id === selectedVariantId) {
+      return maxValue;
+    }
+
+    const match = variant.id.match(/^fn-(\d{4})-(\d{2})(?:-|$)/);
+    if (!match) return maxValue;
+
+    const [, yearPart, sequencePart] = match;
+    if (Number(yearPart) !== currentYear) return maxValue;
+
+    return Math.max(maxValue, Number(sequencePart));
+  }, 0);
+
+  const nextSequence = String(highestSequence + 1).padStart(2, '0');
+  const slug = slugifyVariantIdSegment(title);
+
+  return slug
+    ? `fn-${currentYear}-${nextSequence}-${slug}`
+    : `fn-${currentYear}-${nextSequence}`;
+}
+
 function normalizePracticeForm(practice: Practice): Practice {
   return {
     ...practice,
@@ -141,7 +181,14 @@ export default function AdminPractices() {
     }
     previousVariantIdRef.current = null;
     setSelectedVariantId(null);
-    setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
+    setVariantForm({
+      ...emptyVariant,
+      parentId: selectedPracticeId ?? '',
+      id:
+        selectedPracticeId === FIELD_NOTES_PRACTICE_ID
+          ? buildNextFieldNoteId(variants)
+          : '',
+    });
   }, [selectedPracticeId, practices]);
 
   useEffect(() => {
@@ -153,7 +200,14 @@ export default function AdminPractices() {
     if (variant) {
       setVariantForm(normalizeVariantForm(variant, selectedPracticeId));
     } else {
-      setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
+      setVariantForm({
+        ...emptyVariant,
+        parentId: selectedPracticeId ?? '',
+        id:
+          selectedPracticeId === FIELD_NOTES_PRACTICE_ID
+            ? buildNextFieldNoteId(variants)
+            : '',
+      });
     }
   }, [selectedPracticeId, selectedVariantId, variants]);
 
@@ -180,6 +234,35 @@ export default function AdminPractices() {
     setSelectedVariantId(variantId);
     if (!variant) return;
     setVariantForm(normalizeVariantForm(variant, selectedPracticeId));
+  };
+
+  const handleCreateVariant = () => {
+    setSelectedVariantId(null);
+    setVariantForm({
+      ...emptyVariant,
+      parentId: selectedPracticeId ?? '',
+      id:
+        selectedPracticeId === FIELD_NOTES_PRACTICE_ID
+          ? buildNextFieldNoteId(variants)
+          : '',
+    });
+  };
+
+  const handleVariantTitleChange = (title: string) => {
+    setVariantForm((current) => {
+      const nextForm = { ...current, title };
+
+      if (selectedVariantId || selectedPracticeId !== FIELD_NOTES_PRACTICE_ID) {
+        return nextForm;
+      }
+
+      if (current.id && !AUTO_FIELD_NOTE_ID_PATTERN.test(current.id)) {
+        return nextForm;
+      }
+
+      nextForm.id = buildNextFieldNoteId(variants, title);
+      return nextForm;
+    });
   };
 
   const setStatus = (message: string) => {
@@ -545,10 +628,7 @@ export default function AdminPractices() {
                 <h2 className="font-semibold">Variants</h2>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedVariantId(null);
-                    setVariantForm({ ...emptyVariant, parentId: selectedPracticeId ?? '' });
-                  }}
+                  onClick={handleCreateVariant}
                   className="text-xs text-purple-200 hover:text-white"
                 >
                   New
@@ -588,7 +668,7 @@ export default function AdminPractices() {
                       Title
                       <input
                         value={variantForm.title}
-                        onChange={(event) => setVariantForm({ ...variantForm, title: event.target.value })}
+                        onChange={(event) => handleVariantTitleChange(event.target.value)}
                         className="mt-1 w-full rounded-lg bg-purple-900/60 border border-purple-700/50 px-3 py-2 text-sm"
                       />
                     </label>
