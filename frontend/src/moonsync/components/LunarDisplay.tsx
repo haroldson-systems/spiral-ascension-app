@@ -5,12 +5,9 @@ import { LunarPhase, isThirteenMonth } from '../backend';
 import { Loader2, ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { phaseMeaning } from '../data/phaseMeaning';
-import { phasePractice } from '../data/phasePractice';
 import { getPhaseTimeline } from '../lunarEngine';
 import { getHarmonicTimeline, getHarmonicWindow, getNextHarmonicWindow } from '../harmonicCalendar';
 import { useMoonPhase } from '../hooks/useMoonPhase';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 
 const phaseEmojis: Record<string, string> = {
   newMoon: '🌑',
@@ -98,7 +95,6 @@ export default function LunarDisplay() {
   }, [timeline, moonNow, is13Month]);
 
   const meaning = phaseMeaning[currentPhase] ?? phaseMeaning.newMoon;
-  const practice = phasePractice[currentPhase] ?? phasePractice.newMoon;
   const currentLoreHref = phaseLoreLinks[currentPhase] ?? '/practice-entry/lore-new-moon';
   const harmonicCurrent = useMemo(() => getHarmonicWindow(), []);
   const harmonicNext = useMemo(() => getNextHarmonicWindow(), []);
@@ -122,20 +118,9 @@ export default function LunarDisplay() {
         </div>
       )}
       <CardHeader>
-        <CardTitle className="text-white">
-          {is13Month
-            ? `Current Harmonic Month: ${harmonicCurrent.month.name}`
-            : `Current Lunar Phase: ${phaseNames[currentPhase] ?? 'Loading'} ${phaseEmojis[currentPhase] ?? '🌑'}`}
-        </CardTitle>
-        <CardDescription className="space-y-1 text-purple-200">
-          <span className="block">Energy: {is13Month ? harmonicCurrent.month.meaning_basic : practice.energy}</span>
-          <span className="block">
-            {is13Month
-              ? `Next Month: ${harmonicNext.month.name} (${formatDate(harmonicNext.startMs)})`
-              : nextPhase
-                ? `Next Phase: ${phaseNames[nextPhase.phase]} (${formatDate(nextPhase.date.getTime())})`
-                : 'Next Phase: Calculating'}
-          </span>
+        <CardTitle className="text-white">{is13Month ? 'Current Harmonic Month' : 'Current Lunar Phase'}</CardTitle>
+        <CardDescription className="text-purple-200">
+          {preference && isThirteenMonth(preference.cycleType) ? '13-Month' : '12-Month'} Cycle
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -192,102 +177,69 @@ export default function LunarDisplay() {
           </div>
         ))}
 
-        <div className="border-t border-purple-400/15 pt-5 space-y-5">
-          <div className="rounded-xl border border-purple-400/15 bg-[#120a24]/45 p-5">
-            <p className="text-xs uppercase tracking-wide text-purple-300">
-              Your Practice for the {is13Month ? harmonicCurrent.month.name : phaseNames[currentPhase]}
-            </p>
-            <div className="mt-4 grid gap-3 text-sm text-purple-100 md:grid-cols-2">
-              <p><span className="text-amber-300">Objective:</span> {is13Month ? harmonicCurrent.month.meaning_basic : practice.breathworkFocus.objective}</p>
-              <p><span className="text-amber-300">Pattern:</span> {is13Month ? 'Steady breath with a soft observing stance.' : practice.breathworkFocus.pattern}</p>
-              <p><span className="text-amber-300">Visualization:</span> {is13Month ? harmonicCurrent.month.archetype : practice.breathworkFocus.visualization}</p>
-              <p><span className="text-amber-300">Somatic Cue:</span> {is13Month ? 'Let the body notice the wider yearly rhythm without strain.' : practice.breathworkFocus.somaticCue}</p>
-            </div>
-            {!is13Month ? (
-              <Link
-                to={`/practice-entry/${practice.sessionEntryId}`}
-                className="mt-5 block w-full rounded-lg bg-amber-500/90 px-5 py-3 text-center font-semibold text-purple-950 transition hover:bg-amber-400"
-              >
-                ▶ Play "{practice.sessionName}" Breathwork Session (5 min)
-              </Link>
-            ) : null}
+        <div className="border-t border-purple-400/15 pt-4 space-y-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-purple-300">Historical Context</p>
+            <ul className="mt-2 space-y-1 text-sm text-purple-200">
+              {(is13Month ? harmonicCurrent.month.historical_context : meaning.historical).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
-
-          <div className="rounded-xl border border-purple-400/15 bg-[#4a3277]/16 p-5">
-            <p className="text-xs uppercase tracking-wide text-purple-300">Reflection</p>
-            <div className="mt-4">
-              <p className="font-medium text-white">Beginner Suggestions</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-purple-200">
-                {(is13Month ? harmonicCurrent.month.suggestions_basic : meaning.suggestions_basic).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="mt-4">
-              <p className="font-medium text-white">Reflective Prompt</p>
-              <p className="mt-2 text-sm text-purple-200">
-                {is13Month ? harmonicCurrent.month.moonsync_perspective : practice.reflectivePrompt}
-              </p>
-            </div>
-            <Link
-              to="/vault?mode=personal"
-              className="mt-5 inline-flex rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-500"
-            >
-              + Journal Entry
-            </Link>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-purple-300">Beginner Suggestions</p>
+            <ul className="mt-2 space-y-1 text-sm text-purple-200">
+              {(is13Month ? harmonicCurrent.month.suggestions_basic : meaning.suggestions_basic).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
           </div>
-
-          <div className="rounded-xl border border-purple-400/15 bg-[#120a24]/35 p-5">
-            <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="advanced-context" className="flex items-center gap-2 text-sm font-medium text-amber-300">
-                <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-                Show Advanced Context
-              </Label>
-              <Switch
-                id="advanced-context"
-                checked={showAdvanced}
-                onCheckedChange={setShowAdvanced}
-                className="data-[state=checked]:bg-amber-500"
-              />
-            </div>
-            {showAdvanced && (
-              <div className="mt-5 space-y-5">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-purple-300">MoonSync Perspective</p>
-                  <p className="mt-2 text-sm text-purple-200">
-                    {is13Month ? harmonicCurrent.month.moonsync_perspective : meaning.moonsync_perspective}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-purple-300">The Lore</p>
-                  <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-purple-200">
-                    {(is13Month ? harmonicCurrent.month.historical_context : meaning.historical).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                    {(is13Month ? harmonicCurrent.month.advanced_optional : meaning.advanced_optional).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                {!is13Month ? (
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-purple-300">Learn More</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {[...practice.learnMore, { label: 'Lunar Lore', href: currentLoreHref }, { label: 'Ritual Archive', href: '/practice-entry/lunar-lore-gate-2' }, { label: 'Magick Framework', href: '/practice-entry/magick-framework-solar-vs-lunar-time' }].map((link) => (
-                        <Link
-                          key={`${link.label}-${link.href}`}
-                          to={link.href}
-                          className="rounded-full border border-purple-500/30 bg-purple-800/40 px-3 py-1 text-sm text-purple-100 transition-colors hover:border-purple-400/50 hover:text-white"
-                        >
-                          {link.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+          {!is13Month ? (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-purple-300">Learn more</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to={currentLoreHref}
+                  className="rounded-full border border-purple-500/30 bg-purple-800/40 px-3 py-1 text-sm text-purple-100 transition-colors hover:border-purple-400/50 hover:text-white"
+                >
+                  Lunar Lore
+                </Link>
+                <Link
+                  to="/practice-entry/lunar-lore-gate-2"
+                  className="rounded-full border border-purple-500/30 bg-purple-800/40 px-3 py-1 text-sm text-purple-100 transition-colors hover:border-purple-400/50 hover:text-white"
+                >
+                  Ritual Archive
+                </Link>
+                <Link
+                  to="/practice-entry/magick-framework-solar-vs-lunar-time"
+                  className="rounded-full border border-purple-500/30 bg-purple-800/40 px-3 py-1 text-sm text-purple-100 transition-colors hover:border-purple-400/50 hover:text-white"
+                >
+                  Magick Framework
+                </Link>
               </div>
-            )}
+            </div>
+          ) : null}
+          <div>
+            <p className="text-xs uppercase tracking-wide text-purple-300">MoonSync Perspective</p>
+            <p className="mt-2 text-sm text-purple-200">
+              {is13Month ? harmonicCurrent.month.moonsync_perspective : meaning.moonsync_perspective}
+            </p>
           </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+            {showAdvanced ? 'Hide advanced context' : 'Show advanced context'}
+          </button>
+          {showAdvanced && (
+            <ul className="space-y-1 text-sm text-purple-200">
+              {(is13Month ? harmonicCurrent.month.advanced_optional : meaning.advanced_optional).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {is13Month ? (

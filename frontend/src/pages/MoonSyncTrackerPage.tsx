@@ -48,10 +48,10 @@ export default function MoonSyncTrackerPage() {
           <div className="text-center space-y-3 py-6">
             <div className="flex items-center justify-center space-x-3">
               <Moon className="h-10 w-10 text-amber-400" />
-              <h2 className="text-4xl font-bold text-white">The Observer</h2>
+              <h2 className="text-4xl font-bold text-white">MoonSync</h2>
             </div>
             <p className="text-lg text-purple-200 max-w-xl mx-auto">
-              Connect your inner spiral work to the current rhythm of the moon.
+              Track lunar cycles, align your rituals, and sync with the moon&apos;s energy
             </p>
             {is13Month ? (
               <div className="mx-auto max-w-2xl rounded-xl border border-purple-400/15 bg-[#3a2563]/22 px-4 py-4 text-left">
@@ -74,9 +74,10 @@ export default function MoonSyncTrackerPage() {
               Choose between the standard 12-month lunar cycle and the optional 13-month harmonic mode.
             </p>
           ) : null}
-          <div className="grid grid-cols-1 gap-6">
+          <CycleToggle />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LunarDisplay />
-            <CycleToggle />
             <EventManager />
           </div>
 
