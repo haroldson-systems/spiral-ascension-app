@@ -18,6 +18,11 @@ export default function ModulePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { modules } = useSpiralData();
+  const introMarkdown = id ? spiralIntroContent[id] : undefined;
+  const introHtml = useMemo(() => {
+    if (!introMarkdown) return "";
+    return marked.parse(introMarkdown) as string;
+  }, [introMarkdown]);
 
   // ⬇️ scroll to top whenever this page mounts
   useEffect(() => {
@@ -40,12 +45,7 @@ export default function ModulePage() {
     );
   }
 
-  const introMarkdown = id ? spiralIntroContent[id] : undefined;
   const paragraphs = chapter.description ? formatChapterParagraphs(chapter.description) : [];
-  const introHtml = useMemo(() => {
-    if (!introMarkdown) return "";
-    return marked.parse(introMarkdown) as string;
-  }, [introMarkdown]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0b2e] to-[#0c0716] text-white p-8 pt-16">
