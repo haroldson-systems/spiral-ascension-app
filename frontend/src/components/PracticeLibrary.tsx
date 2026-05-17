@@ -20,7 +20,12 @@ export default function PracticeLibrary() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {practices.map(practice => (
-            <PracticeCard key={practice.id} practice={practice} />
+            <PracticeCard
+              key={practice.id}
+              practice={practice}
+              to={practice.id === 'the-observer' ? '/moonsync' : undefined}
+              startLabel={practice.id === 'the-observer' ? 'Open MoonSync' : 'Start'}
+            />
           ))}
         </div>
       </div>

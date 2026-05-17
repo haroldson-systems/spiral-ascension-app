@@ -11,7 +11,9 @@ function getStoredMode(): VaultMode {
   try {
     const s = localStorage.getItem(VAULT_MODE_KEY);
     if (s === 'spiral' || s === 'personal') return s;
-  } catch {}
+  } catch {
+    /* Ignore unavailable localStorage. */
+  }
   return 'personal';
 }
 
@@ -29,15 +31,19 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
       setMode(initialMode);
       try {
         localStorage.setItem(VAULT_MODE_KEY, initialMode);
-      } catch {}
+      } catch {
+        /* Ignore unavailable localStorage. */
+      }
     }
-  }, [initialMode]);
+  }, [initialMode, mode]);
 
   const setModeAndStore = (m: VaultMode) => {
     setMode(m);
     try {
       localStorage.setItem(VAULT_MODE_KEY, m);
-    } catch {}
+    } catch {
+      /* Ignore unavailable localStorage. */
+    }
   };
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
