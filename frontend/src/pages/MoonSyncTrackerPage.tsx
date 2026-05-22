@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Moon, ArrowLeft } from 'lucide-react';
 import CycleToggle from '@/moonsync/components/CycleToggle';
 import LunarDisplay from '@/moonsync/components/LunarDisplay';
+import MoonSignKundalini from '@/moonsync/components/MoonSignKundalini';
 import EventManager from '@/moonsync/components/EventManager';
 import { useCyclePreference } from '@/moonsync/hooks/useQueries';
 import { isThirteenMonth } from '@/moonsync/backend';
@@ -78,6 +79,7 @@ export default function MoonSyncTrackerPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <LunarDisplay />
+            <MoonSignKundalini />
             <EventManager />
           </div>
 
