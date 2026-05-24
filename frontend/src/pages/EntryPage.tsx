@@ -438,34 +438,34 @@ export default function EntryPage() {
         <h2 className="mb-4 font-['Cinzel',serif] text-[clamp(2rem,4vw,3rem)] font-semibold">
           One Price. Full Access.
         </h2>
-        <p className="mx-auto mb-12 max-w-[480px] text-lg text-white/70">
+        <p className="mx-auto mb-14 max-w-[520px] text-lg text-white/70">
           Everything inside the Spiral — every module, every practice, every tool — for less than a
           coffee.
         </p>
 
-        <div className="mx-auto max-w-[420px] rounded-[20px] border border-[#d4af37]/20 bg-gradient-to-br from-[#2d1b4e]/60 to-[#1a0b2e]/80 px-10 py-12 shadow-[0_0_80px_rgba(107,70,193,0.1)]">
+        <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#d4af37]/20 bg-gradient-to-br from-[#2d1b4e]/60 to-[#1a0b2e]/80 px-8 py-14 shadow-[0_0_80px_rgba(107,70,193,0.1)] sm:px-14">
           <div className="font-['Cinzel',serif] text-[3.5rem] font-bold leading-none text-[#d4af37]">
             $3.33
             <span className="text-xl font-normal text-white/60">/month</span>
           </div>
-          <p className="mb-8 mt-1.5 text-base text-white/60">Start with a 7-day free trial</p>
+          <p className="mb-10 mt-1.5 text-base text-white/60">Start with a 7-day free trial</p>
 
-          <ul className="mb-9 space-y-0 text-left">
+          <div className="mx-auto mb-10 grid max-w-[600px] gap-x-8 gap-y-3.5 text-left sm:grid-cols-2">
             {PRICING_ITEMS.map((item, i) => (
-              <li
+              <div
                 key={i}
-                className="flex items-center gap-2.5 border-b border-purple-500/8 py-2.5 text-[0.95rem] text-white/70"
+                className="flex items-start gap-2.5 text-[0.95rem] text-white/70"
               >
-                <span className="text-[0.6rem] text-[#d4af37]">✦</span>
+                <span className="mt-1 shrink-0 text-[0.6rem] text-[#d4af37]">✦</span>
                 {item}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
 
           <button
             type="button"
             onClick={() => navigate('/subscribe')}
-            className="inline-flex min-w-[240px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110 hover:shadow-[0_0_50px_rgba(150,70,255,0.4)]"
+            className="inline-flex min-w-[260px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110 hover:shadow-[0_0_50px_rgba(150,70,255,0.4)]"
           >
             Begin the Spiral
           </button>
