@@ -23,7 +23,7 @@ const IMG = {
 /* ─── Story text ─── */
 const STORY_P1 = "There was a boy who knew things he shouldn't have known. He saw patterns others missed. Felt energies no one else acknowledged. Remembered truths that predated his birth.";
 const STORY_P2 = 'They told him he was wrong. Sensitive. Too much. So he learned to forget. To dim his light. To fit into boxes that were never meant to hold him.';
-const STORY_P3 = 'But the knowing never left. It waited. Spiraling deeper, until one day—when the pain of forgetting became greater than the fear of remembering—he began the descent.';
+const STORY_P3 = 'But the knowing never left. It waited. Spiraling deeper, until one day, when the pain of forgetting became greater than the fear of remembering, he began the descent.';
 
 /* ─── Feature data ─── */
 interface Feature {
@@ -87,9 +87,9 @@ const FEATURES: Feature[] = [
     visual: (
       <div className="relative py-10 text-center">
         <div className="absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#d4af37]/15 blur-[120px]" />
-        <div className="relative flex justify-center gap-4">
+        <div className="relative flex justify-center gap-2 sm:gap-4">
           {[IMG.moonNew, IMG.moonWaxing, IMG.moonFull, IMG.moonWaning].map((src, i) => (
-            <img key={i} src={src} alt="" className="h-[90px] w-[90px] rounded-full border border-[#d4af37]/25 shadow-[0_0_30px_rgba(107,70,193,0.3)]" loading="lazy" />
+            <img key={i} src={src} alt="" className="h-[60px] w-[60px] sm:h-[90px] sm:w-[90px] rounded-full border border-[#d4af37]/25 shadow-[0_0_30px_rgba(107,70,193,0.3)]" loading="lazy" />
           ))}
         </div>
         <p className="mt-5 font-['Cinzel',serif] text-xs tracking-[0.1em] text-white/40">
@@ -465,7 +465,7 @@ export default function EntryPage() {
           <button
             type="button"
             onClick={() => navigate('/subscribe')}
-            className="inline-flex min-w-[260px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110 hover:shadow-[0_0_50px_rgba(150,70,255,0.4)]"
+            className="inline-flex w-full max-w-[260px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110 hover:shadow-[0_0_50px_rgba(150,70,255,0.4)]"
           >
             Begin the Spiral
           </button>
@@ -488,7 +488,7 @@ export default function EntryPage() {
         <button
           type="button"
           onClick={() => navigate('/subscribe')}
-          className="inline-flex min-w-[240px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110"
+          className="inline-flex w-full max-w-[240px] items-center justify-center rounded-xl border border-[#d4af37]/60 bg-gradient-to-r from-[#8a2be2] via-[#9f3bf7] to-[#7c2bd3] px-10 py-[18px] text-lg font-bold tracking-wide text-white shadow-[0_0_30px_rgba(150,70,255,0.25)] transition hover:brightness-110"
         >
           Start Your Free Trial
         </button>
