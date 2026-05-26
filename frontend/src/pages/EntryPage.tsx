@@ -39,9 +39,9 @@ const FEATURES: Feature[] = [
   {
     label: 'The Spiral Library',
     title: <>Seven Hermetic Principles.<br />Three Ascending Paths.</>,
-    desc: 'Journey through 21 modules across Initiate, Apprentice, and Adept tiers — each built on the timeless Hermetic laws. Each Spiral module is tuned to its own Solfeggio frequency.',
+    desc: 'Journey through 21 modules across Initiate, Apprentice, and Adept tiers, each built on the timeless Hermetic laws. Each Spiral module is tuned to its own Solfeggio frequency.',
     bullets: [
-      'Prologue origin story — "The Boy Who Knew"',
+      'Prologue origin story: "The Boy Who Knew"',
       '7 principles × 3 tiers of deepening mastery',
       'Solfeggio frequency tones paired with each module',
     ],
@@ -120,7 +120,7 @@ const FEATURES: Feature[] = [
   {
     label: 'Frequency Healing',
     title: <>Sacred Tones<br />Woven Through the Spiral.</>,
-    desc: "Every Spiral module carries an assigned Solfeggio frequency — from 396 Hz (liberation from fear) to 963 Hz (awakening to source). These aren't background noise. They're keys that unlock the lesson at a cellular level.",
+    desc: "Every Spiral module carries an assigned Solfeggio frequency, from 396 Hz (liberation from fear) to 963 Hz (awakening to source). These aren't background noise. They're keys that unlock the lesson at a cellular level.",
     bullets: [
       '396 Hz · 417 Hz · 528 Hz · 639 Hz · 741 Hz · 852 Hz · 963 Hz',
       'Each frequency paired to specific Hermetic principles',
@@ -138,10 +138,10 @@ const FEATURES: Feature[] = [
 ];
 
 const PRICING_ITEMS = [
-  'Full Spiral Library — all 21+ modules across 3 tiers',
+  'Full Spiral Library: all 21+ modules across 3 tiers',
   '10 breathwork & somatic practices',
   'MoonSync lunar tracker with Kundalini alignment',
-  'The Vault — private journaling & reflection space',
+  'The Vault: private journaling & reflection space',
   'Solfeggio frequency tones in every Spiral module',
   'Resonance Gate music library (coming soon)',
   'New content added as the Spiral evolves',
@@ -439,7 +439,7 @@ export default function EntryPage() {
           One Price. Full Access.
         </h2>
         <p className="mx-auto mb-14 max-w-[520px] text-lg text-white/70">
-          Everything inside the Spiral — every module, every practice, every tool — for less than a
+          Everything inside the Spiral, every module, every practice, every tool, for less than a
           coffee.
         </p>
 
