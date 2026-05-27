@@ -378,6 +378,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "A rapid Ignition → Axis-Hold loop: clear the field and drop to center in five minutes.",
     body: "## 5-Minute Axis Ignition\n\nUse this when the field feels scattered and you need to return to the central line quickly.\n\n## Minute Map\n\n- 0-1: Ignite — inhale through the nose, exhale through the mouth, feel the base of the spine wake up.\n- 1-2: Drop — soften the shoulders and let awareness descend through the body.\n- 2-3: Axis-Hold — breathe evenly while visualizing a vertical line from crown to root.\n- 3-4: Compress — gather loose attention back into the center channel.\n- 4-5: Radiate — keep the spine steady and let calm move outward without leaving center.\n\n## Integration\n\n- What pulled you off-axis before practice?\n- Where did the center line feel strongest?\n- What one action can you take from steadiness instead of reaction?",
     startLabel: "Start 5-min Ignition",
+    integrationPrompts: [
+      "What pulled you off-axis before practice?",
+      "Where did the center line feel strongest?",
+      "What one action can you take from steadiness instead of reaction?",
+    ],
   },
   {
     id: "axis-full-30",
@@ -390,6 +395,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "Six phases: Ignite · Hold · Coherence · Helix Compression · Light Circuit · Six-S Seal. A 30-minute descent into stillness and radiant return.",
     body: "## Axis — Full Spiral Breath Ritual\n\nAxis is the stabilizing ritual of the Spiral practice set. Vortex descends, Helix advances, Fractal expands, and Axis remembers the vertical line that keeps power from scattering.\n\n\"Power without center becomes noise. Center without breath becomes stone.\"\n\n## Six-Phase Overview\n\n- Ignite — wake the central channel and establish presence.\n- Axis-Hold — hold the body as a single pillar of attention.\n- Coherence — smooth the breath until the nervous system begins to entrain.\n- Helix Compression — draw loose energy back into the spine without collapse.\n- Light Circuit — circulate awareness from root to crown and crown to root.\n- Six-S Seal — close the ritual with steadiness, silence, and soft return.\n\n## Phase I — Ignite\n\nObjective: wake the body without forcing activation.\n\nBreath: inhale 4, exhale 6.\n\nVisualization: a gold spark at the base of the spine brightens with each breath.\n\n## Phase II — Axis-Hold\n\nObjective: establish the vertical line.\n\nBreath: even 5-5 cadence.\n\nVisualization: a clear column connects crown, heart, navel, pelvis, and feet.\n\n## Phase III — Coherence\n\nObjective: let the breath, posture, and attention become one rhythm.\n\nBreath: inhale 6, exhale 6.\n\nDrill: keep the jaw soft, shoulders heavy, and spine awake.\n\n## Phase IV — Helix Compression\n\nObjective: gather scattered energy back into the center channel.\n\nBreath: inhale 4, hold 4, exhale 8.\n\nVisualization: two spiral currents wrap around the axis and compress into calm power.\n\n## Phase V — Light Circuit\n\nObjective: move attention through the whole vertical pathway.\n\nBreath: free wave, slow and unforced.\n\nVisualization: light rises on the inhale and descends on the exhale.\n\n## Phase VI — Six-S Seal\n\nObjective: finish grounded instead of overstimulated.\n\nClose with six quiet breaths: soften, settle, see, sense, seal, step forward.\n\n## Integration & Reflection\n\n- Where did the axis feel interrupted?\n- What changed when breath and spine moved together?\n- What needs to be done from center today?",
     startLabel: "Begin Full Ritual",
+    integrationPrompts: [
+      "Where did the axis feel interrupted?",
+      "What changed when breath and spine moved together?",
+      "What needs to be done from center today?",
+    ],
   },
   {
     id: "breath-grounding",
