@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, PenLine, Sparkles } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import PracticeCard from '@/components/PracticeCard';
 import { usePracticesData } from '@/hooks/usePracticesData';
 import { homeSectionHref } from '@/lib/homeNavigation';
 import { normalizeVideoEmbedUrl } from '@/lib/videoEmbeds';
+import { createVaultEntry } from '@/lib/vaultApi';
 
 marked.setOptions({ breaks: true });
 
@@ -39,6 +40,120 @@ function renderEntryBody(body: string) {
       'class',
     ],
   });
+}
+
+interface PracticeReflectionBoxProps {
+  practiceTitle: string;
+  parentTitle: string;
+  prompts: string[];
+}
+
+function PracticeReflectionBox({ practiceTitle, parentTitle, prompts }: PracticeReflectionBoxProps) {
+  const [answers, setAnswers] = useState<string[]>(() => prompts.map(() => ''));
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const hasAnswer = answers.some((answer) => answer.trim().length > 0);
+
+  const handleAnswerChange = (index: number, value: string) => {
+    setAnswers((prev) => prev.map((answer, answerIndex) => (answerIndex === index ? value : answer)));
+    setStatus('idle');
+  };
+
+  const handleSave = async () => {
+    if (!hasAnswer || saving) return;
+
+    const content = [
+      `# ${practiceTitle} Reflection`,
+      '',
+      `Practice family: ${parentTitle}`,
+      `Saved: ${new Date().toLocaleString()}`,
+      '',
+      ...prompts.flatMap((prompt, index) => [
+        `## Prompt ${index + 1}`,
+        prompt,
+        '',
+        answers[index]?.trim() || '_No response recorded._',
+        '',
+      ]),
+    ].join('\n');
+
+    setSaving(true);
+    setStatus('idle');
+
+    try {
+      await createVaultEntry({
+        content,
+        tags: ['practice-reflection', parentTitle, practiceTitle],
+        type: 'text',
+      });
+      setStatus('saved');
+    } catch {
+      setStatus('error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="rounded-2xl border-2 border-amber-500/30 bg-[#2d1b4e]/60 p-6 shadow-xl lg:p-8">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex gap-3">
+          <PenLine className="mt-1 h-5 w-5 shrink-0 text-amber-400" />
+          <div>
+            <h2 className="text-2xl font-semibold text-white">Integration Reflection</h2>
+            <p className="mt-1 text-sm text-purple-200/80">
+              Answer the three practice prompts here, then save this session into your Vault.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/vault?mode=personal"
+          className="text-sm font-medium text-amber-300 transition hover:text-amber-200"
+        >
+          View Vault →
+        </Link>
+      </div>
+
+      <div className="space-y-5">
+        {prompts.map((prompt, index) => (
+          <label key={prompt} className="block">
+            <span className="mb-2 block text-sm font-semibold text-amber-200">
+              Prompt {index + 1}: {prompt}
+            </span>
+            <textarea
+              value={answers[index]}
+              onChange={(event) => handleAnswerChange(index, event.target.value)}
+              placeholder="Write what surfaced during this practice..."
+              className="min-h-[120px] w-full resize-y rounded-xl border border-purple-500/20 bg-[#1a0b2e]/70 p-4 text-sm text-white placeholder:text-purple-300/40 focus:border-amber-500/40 focus:outline-none"
+            />
+          </label>
+        ))}
+      </div>
+
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-purple-300/75">
+          Each save creates a dated Vault entry, so repeated sessions keep their own record.
+        </p>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasAnswer || saving}
+          className="rounded-lg bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Reflection to Vault'}
+        </button>
+      </div>
+
+      {status === 'saved' && (
+        <p className="mt-3 text-sm font-medium text-emerald-300">Saved to your Vault.</p>
+      )}
+      {status === 'error' && (
+        <p className="mt-3 text-sm font-medium text-red-300">
+          Could not save this reflection. Please try again.
+        </p>
+      )}
+    </section>
+  );
 }
 
 export default function PracticeEntryDetail() {
@@ -219,6 +334,14 @@ export default function PracticeEntryDetail() {
             />
           </section>
         )}
+
+        {variant.integrationPrompts?.length ? (
+          <PracticeReflectionBox
+            practiceTitle={variant.title}
+            parentTitle={parentEntry.title}
+            prompts={variant.integrationPrompts}
+          />
+        ) : null}
 
         {childVariants.length > 0 && (
           <section className="space-y-6">

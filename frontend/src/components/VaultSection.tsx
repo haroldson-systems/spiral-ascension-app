@@ -194,7 +194,7 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
                       </div>
                     )}
                   </div>
-                  <p className="text-[#e8e8f0] leading-relaxed">{entry.content}</p>
+                  <p className="whitespace-pre-wrap text-[#e8e8f0] leading-relaxed">{entry.content}</p>
                 </div>
               ))
             )}

@@ -33,6 +33,7 @@ export interface PracticeVariant {
   frequency?: string;
   credit?: string;
   sourceUrl?: string;
+  integrationPrompts?: string[];
 }
 
 export const legacyPracticeImages: Record<string, string> = {
@@ -275,6 +276,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "One rapid, clockwise spiral of the full five-phase pattern. Perfect as a daily micro-reset or warm-up before deeper work.",
     body: "## 5-Minute Solo Spin-Cycle Drill\n\nA rapid-deployment version for on-the-go recalibration.\n\n## Minute Map\n\n- 0-1: Ignition — 4-4-8-4\n- 1-2: Descent — 6-6-6-0\n- 2-3: Compression — 8-0-8-0\n- 3-4: Inversion — 2-8-4-2\n- 4-5: Release — Free wave\n\n## Telemetry\n\nLog heart-rate delta and emotional valence in MoonSync immediately post-cycle.\n\n## Integration\n\n- Prompt 1: What surfaced during Descent?\n- Prompt 2: What inversion insight arose?\n- Prompt 3: How do you feel in the minutes after Release?\n\nLeave at least 90 seconds of complete stillness before speaking or moving into external tasks.",
     startLabel: "Open 5-min Cycle",
+    integrationPrompts: [
+      "What surfaced during Descent?",
+      "What inversion insight arose?",
+      "How do you feel in the minutes after Release?",
+    ],
   },
   {
     id: "vortex-shadow-cycler-20",
@@ -287,6 +293,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "Descend through all five shadow-phases, dwell in the inversion flash, and rise with integrated charge.",
     body: "## Preface — The Call to Descent\n\nMost alchemical texts point us upward toward light, transcendence, and the stellar crown. Vortex turns the spiral in the opposite direction: down and in, toward the dense strata where unmet shadow waits.\n\nYou are not here to bypass darkness; you are here to metabolize it.\n\nSpin-work is tactical. It gives the operator a repeatable sequence to surface heavy affect, compress it to its core frequency, flip polarity, and liberate stored power. Vortex is the crank-shaft that keeps the Spiral engine honest: no ascent without an equal, conscious descent.\n\n\"As within, so without. Spin to surface; compress to crystal; reverse to radiate.\"\n\n## Vortex Philosophy\n\n- Bidirectionality of Flow — Every spiral has a clockwise (expansive) and counter-clockwise (contractive) expression. Mastery requires command of both.\n- Shadow as Fuel — Unprocessed emotion is not waste; it is potential energy awaiting transmutation.\n- Somatic Sovereignty — The body is the crucible. Breath and posture are the flame and the vessel.\n- Time Dilation — Intentional compression slows subjective time, granting the operator precision access to memory-imprints normally lost in noise.\n- Return to Silence — All cycles release into stillness; there is no permanent spin.\n\n## Cycle Overview\n\nThe full Vortex consists of five distinct phases executed sequentially.\n\n- Ignition — 4-4-8-4 — Spark at solar plexus — Neutral to Charge\n- Descent — 6-6-6-0 — Weighted gravity — Charge to Density\n- Compression — 8-0-8-0 — Spiral tightening — Density to Singularity\n- Inversion — 2-8-4-2 — Mobius twist — Shadow to Light\n- Release — Free wave — Expansion ripple — Light to Field\n\nThe operator completes one Spin by riding the entire five-phase arc without interruption.\n\n## Phase I — Ignition\n\nObjective: Spark internal fire and establish cyclical rhythm.\n\nBreath Pattern: Inhale 4 / Hold 4 / Exhale 8 / Hold 4\n\nVisualization: A white-gold flame ignites behind the sternum, spiraling counter-clockwise toward the navel.\n\nSomatic Drill: Stand or sit tall. On each inhale, imagine drawing oxygen directly into the solar plexus. During the 8-count exhale, feel warmth descend the mid-line. Maintain gentle abdominal tension during both holds to build charge.\n\nOperational Notes\n\n- Keep gaze soft; slight upward angle relaxes the optic nerve.\n- If dizziness occurs, halve the counts but keep proportions.\n\nJournaling Cue: What emotion first flickered when the fire lit?\n\n## Phase II — Descent\n\nObjective: Guide awareness into the subterranean layers where shadow material resides.\n\nBreath Pattern: 6-6-6-0 (box breathing, no final hold)\n\nVisualization: Weight doubles; awareness drops through floors of the inner body — chest to gut to pelvis to soles.\n\nSomatic Drill: On each hold, scan for somatic hotspots (tightness, tingling, ache). Anchor attention there on the following inhale.\n\nCautions: Emotional intensity often peaks here. Maintain observer stance; do not analyze.\n\nJournaling Cue: Which hotspot called the loudest?\n\n## Phase III — Compression\n\nObjective: Collapse the energetic charge to a single point of maximum density.\n\nBreath Pattern: 8-0-8-0 (equal inhale/exhale, no holds)\n\nVisualization: A vortex funnel tightens; everything extraneous is forced to center.\n\nSomatic Drill: Curl shoulders slightly forward, chin tucked. Exhale with gentle vocal fry to amplify tremor. Allow micro-shakes.\n\nMechanical Insight: Compression creates the pressure-gradient needed for polarity flip.\n\nJournaling Cue: If the charge had a color, what hue?\n\n## Phase IV — Inversion\n\nObjective: Flip polarity — shadow charge into radiant force.\n\nBreath Pattern: 2-8-4-2\n\nVisualization: Mobius strip: the inner plane becomes outer; dark becomes luminous.\n\nSomatic Drill: On the long hold (8), gently arch spine, open throat, imagine the singularity turning itself inside out.\n\nAfter-Effect: Surge of clarity, temperature shift, spontaneous insight.\n\nJournaling Cue: What truth surfaced in the inversion flash?\n\n## Phase V — Release\n\nObjective: Disperse liberated energy through the field and return to equanimity.\n\nBreath Pattern: Free-form wave breathing; allow natural cadence.\n\nVisualization: Concentric rings of prismatic light expanding from heart center.\n\nIntegration Drill: Exhale through pursed lips; imagine mist spraying outward, seeding the environment.\n\nJournaling Cue: Where in life will you apply the newly freed power?\n\n## Integration & Reflection\n\n- Prompt 1: What surfaced during Descent?\n- Prompt 2: What inversion insight arose?\n- Prompt 3: How do you feel in the minutes after Release?\n\nLeave at least 90 seconds of complete stillness before speaking or moving into external tasks.\n\n## References & Glyph Map\n\n- Glyph 001: Counter-clockwise triple-loop spiral (phase marker)\n- Glyph 002: Apex-up triangle (fire, Ignition)\n- Glyph 003: Dotted halo (field boundary, Release)\n\nRefer to the appendix diagrams for precise stroke order and placement.",
     startLabel: "Open Full Routine",
+    integrationPrompts: [
+      "What surfaced during Descent?",
+      "What inversion insight arose?",
+      "How do you feel in the minutes after Release?",
+    ],
   },
   {
     id: "helix-timeline-nav-5",
@@ -299,6 +310,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "A brisk, single-pass spin through all five phases. Perfect for daily calibration or a quick pre-work ritual.",
     body: "## 5-Minute Micro-Thread Drill\n\nA rapid-deployment version for on-the-go recalibration.\n\n## Minute Map\n\n- 0-1: Anchor — 4-4-4-4\n- 1-2: Vector — 6-2-6-2\n- 2-3: Sequence — 4-0-8-0\n- 3-4: Converge — 2-8-4-2\n- 4-5: Release — Free wave\n\n## Telemetry\n\nNote perceived clarity, motivation spike, or synchronicities.\n\n## Integration\n\n- Prompt 1: What micro-action felt most alive?\n- Prompt 2: Which probable branch resisted convergence?\n- Prompt 3: What real-world signpost will confirm thread alignment?",
     startLabel: "Open 5-min Thread",
+    integrationPrompts: [
+      "What micro-action felt most alive?",
+      "Which probable branch resisted convergence?",
+      "What real-world signpost will confirm thread alignment?",
+    ],
   },
   {
     id: "helix-timeline-nav-25",
@@ -311,6 +327,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "Anchor → Vector → Sequence → Converge → Release. A 25-minute deep reset to collapse probability into coherent momentum.",
     body: "## Preface — The Call to Forward Flow\n\nWhere Vortex descends, Helix advances. It spirals upward and outward, threading the operator’s intent along a conscious line of time. Helix practice sharpens foresight, aligns sequential action, and collapses probabilistic drift into coherent momentum.\n\n\"Time is not a river; it's a braided current. Choose your strand.\"\n\n## Helix Philosophy\n\n- Linearity is optional — multiple potential sequences co-exist; the operator selects which to energize.\n- Anchored Intention — a fixed reference point prevents timeline wobble.\n- Vector Clarity — direction must be explicit (goal, deadline, emotional signature).\n- Sequenced Micro-Moves — small, ordered actions compound.\n- Convergent Release — culminate the sequence, then return to present to capture lessons.\n\n## Timeline Mechanics\n\n- Anchor — 4-4-4-4 — Rooting stance — Fix in present\n- Vector — 6-2-6-2 — Chin tilt forward — Project intent\n- Sequence — 4-0-8-0 — Step-tap rhythm — Stack micro-actions\n- Convergence — 2-8-4-2 — Palms meet — Collapse probability\n- Release — Free wave — Exhale upward — Return to now\n\nThe operator completes one Thread by riding all five phases without interruption.\n\n## Phase I — Anchor\n\nObjective: Fix consciousness firmly in the present before projecting forward.\n\nBreath: Box 4-4-4-4.\n\nVisualization: Silver pin dropping straight through the spine into the earth.\n\nDrill: Stand feet hip-width, slight knee bend; feel weight distribute evenly.\n\nJournaling Cue: What felt immovable in the present moment?\n\n## Phase II — Vector\n\nObjective: Define direction and emotional signature of the desired timeline.\n\nBreath: 6-2-6-2.\n\nVisualization: Arrow of light shooting from third eye along chosen path.\n\n## Phase III — Sequence\n\nObjective: Stack specific micro-actions in chronological order.\n\nBreath: 4-0-8-0.\n\nVisualization: Beads clicking onto a silver thread, one per exhale.\n\n## Phase IV — Convergence\n\nObjective: Collapse probabilistic branches into the chosen timeline.\n\nBreath: 2-8-4-2.\n\nVisualization: Multiple threads merging into one glowing cable.\n\n## Phase V — Release\n\nReturn awareness to the body; allow the future thread to run autonomously.\n\nBreath: Free-form; gentle sighs.\n\n## 5-Minute Micro-Thread Drill\n\n- 0-1: Anchor — 4-4-4-4\n- 1-2: Vector — 6-2-6-2\n- 2-3: Sequence — 4-0-8-0\n- 3-4: Converge — 2-8-4-2\n- 4-5: Release — Free wave\n\n## Integration & Reflection\n\n- Prompt 1: What micro-action felt most alive?\n- Prompt 2: Which probable branch resisted convergence?\n- Prompt 3: What real-world signpost will confirm thread alignment?\n\n## References & Glyph Map\n\n- Glyph H-001: Two-strand upward helix\n- Glyph H-002: Forward arrow pierces helix loop\n- Glyph H-003: Convergence star (merged threads)\n\nAppendix: Place figures 1-6 here plus a Timeline-Thread Worksheet.",
     startLabel: "Open Full Routine",
+    integrationPrompts: [
+      "What micro-action felt most alive?",
+      "Which probable branch resisted convergence?",
+      "What real-world signpost will confirm thread alignment?",
+    ],
   },
   {
     id: "fractal-expander-5",
@@ -323,6 +344,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "Seed, Pulse, Replicate, Amplify, Diffuse — one wave through all five phases in five minutes. A rapid field-reset before meetings or travel.",
     body: "## 5-Minute Micro-Fractal Drill\n\nA rapid-deployment version for on-the-go recalibration.\n\n## Minute Map\n\n- 0-1: Seed — 4-8-4-0\n- 1-2: Pulse — 6-0-6-0\n- 2-3: Replicate — 4-0-8-0\n- 3-4: Amplify — 2-8-4-2\n- 4-5: Diffuse — Free wave\n\n## Integration\n\n- Prompt 1: Where did the pattern already exist externally?\n- Prompt 2: Where is resonance weakest?\n- Prompt 3: What synchronicity confirmed successful propagation?",
     startLabel: "Open 5-min Drill",
+    integrationPrompts: [
+      "Where did the pattern already exist externally?",
+      "Where is resonance weakest?",
+      "What synchronicity confirmed successful propagation?",
+    ],
   },
   {
     id: "fractal-expander-25",
@@ -335,6 +361,11 @@ export const practiceVariants: PracticeVariant[] = [
     description: "Ride multiple waves, expanding your chosen pattern from heart-seed to network field. Best for weekly deep-propagation work.",
     body: "## Preface — Pattern Over Presence\n\nHelix threads forward; Vortex dives inward. Fractal unfolds outward — multiplying a chosen pattern across nested layers until every scale hums the same geometry.\n\n\"A pattern repeated is a pattern remembered.\"\n\n## Fractal Philosophy\n\n- Holographic Principle — each fragment can contain the whole.\n- Coherence First — only a stable seed should be replicated.\n- Radial Propagation — expansion moves in concentric spheres, not lines.\n- Feedback Resonance — outer reflections reinforce the inner seed.\n- Entropy Check — diffusion must pause once signal-to-noise degrades.\n\n## Pattern-Spin Mechanics\n\n- Seed — 4-8-4-0 — Palm over heart — Intra-self\n- Pulse — 6-0-6-0 — Percussive chest tap — Self to Aura\n- Replicate — 4-0-8-0 — Arms sweep outward — Aura to Room\n- Amplify — 2-8-4-2 — Spiral step turn — Room to Network\n- Diffuse — Free wave — Hands raise and release — Network to Field\n\nThe operator completes one Wave by riding all five phases without pause.\n\n## Phase I — Seed\n\nObjective: Encode the core pattern at personal center.\n\nBreath: 4-8-4-0\n\nVisualization: Glowing sigil settles behind sternum.\n\nJournaling Cue: Define the pattern in one declarative sentence.\n\n## Phase II — Pulse\n\nObjective: Emit rhythmic bursts to prime the near field.\n\nBreath: 6-0-6-0\n\nVisualization: Ring of light pulses outward each exhale.\n\n## Phase III — Replicate\n\nObjective: Duplicate the pattern into the surrounding space.\n\nBreath: 4-0-8-0\n\nVisualization: Tiled glyphs appear across room walls.\n\n## Phase IV — Amplify\n\nObjective: Project replicated pattern into wider network (people/projects).\n\nBreath: 2-8-4-2\n\nVisualization: Fractal branches shoot along relational lines.\n\n## Phase V — Diffuse\n\nReturn to observer stance; allow the field to echo back reinforced pattern.\n\nBreath: Free-form sighs.\n\n## 5-Minute Micro-Fractal Drill\n\n- 0-1: Seed — 4-8-4-0\n- 1-2: Pulse — 6-0-6-0\n- 2-3: Replicate — 4-0-8-0\n- 3-4: Amplify — 2-8-4-2\n- 4-5: Diffuse — Free wave\n\n## Integration & Reflection\n\n- Prompt 1: Where did the pattern already exist externally?\n- Prompt 2: Where is resonance weakest?\n- Prompt 3: What synchronicity confirmed successful propagation?\n\n## References & Glyph Map\n\n- Glyph F-001: Nested triple spiral\n- Glyph F-002: Six-point pulse star\n- Glyph F-003: Branching fractal antenna\n\nAppendix: Figures 1-6 plus a Field-Echo Worksheet.",
     startLabel: "Open Full Routine",
+    integrationPrompts: [
+      "Where did the pattern already exist externally?",
+      "Where is resonance weakest?",
+      "What synchronicity confirmed successful propagation?",
+    ],
   },
   {
     id: "axis-ignition-5",
