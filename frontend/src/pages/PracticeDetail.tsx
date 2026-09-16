@@ -97,7 +97,10 @@ export default function PracticeDetail() {
               {practice.level}
             </span>
           </div>
-          <p className="text-purple-100/90 leading-relaxed max-w-3xl">{practice.description}</p>
+          {practice.description?.trim() &&
+            practice.description.trim() !== practice.subtitle?.trim() && (
+              <p className="text-purple-100/90 leading-relaxed max-w-3xl">{practice.description}</p>
+            )}
         </section>
 
         <section className="space-y-6">

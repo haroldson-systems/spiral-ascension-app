@@ -31,6 +31,11 @@ export default function PracticeCard({
 }: PracticeCardProps) {
   const href = to ?? (!variant ? `/practice/${practice.id}` : undefined);
   const useMinimalMeta = minimalMeta || (variant && Boolean(href));
+  const subtitle = practice.subtitle?.trim();
+  const description = practice.description?.trim();
+  const showSubtitle = Boolean(subtitle) && !useMinimalMeta;
+  // Guard against CMS records where description was saved as a copy of the subtitle.
+  const showDescription = Boolean(description) && !(showSubtitle && description === subtitle);
   const cardContents = (
     <>
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -52,15 +57,17 @@ export default function PracticeCard({
         ) : null}
 
         <h3 className="text-xl font-bold text-[#e8e8f0] mb-2">{practice.title}</h3>
-        {practice.subtitle && !useMinimalMeta && (
+        {showSubtitle && (
           <p className="text-[#e8e8f0]/80 text-sm mb-2 leading-relaxed line-clamp-2">
-            {practice.subtitle}
+            {subtitle}
           </p>
         )}
-        
-        <p className={`text-[#e8e8f0]/70 text-sm leading-relaxed ${useMinimalMeta ? 'mb-6 line-clamp-3' : 'mb-4 line-clamp-4'}`}>
-          {practice.description}
-        </p>
+
+        {showDescription && (
+          <p className={`text-[#e8e8f0]/70 text-sm leading-relaxed ${useMinimalMeta ? 'mb-6 line-clamp-3' : 'mb-4 line-clamp-4'}`}>
+            {description}
+          </p>
+        )}
 
         {(practice.frequency || practice.supportState) && (
           <div className={`flex flex-wrap gap-2 ${useMinimalMeta ? 'mb-6' : 'mb-4'}`}>
