@@ -231,7 +231,7 @@ class MoonSyncEventUpdate(BaseModel):
 # still sends it and it disagrees with the verified identity, the request is
 # rejected so a mismatch can never silently touch another user's rows.
 
-AUTH_USER_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_USER_CACHE_TTL_SECONDS", "60"))
+AUTH_USER_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_USER_CACHE_TTL_SECONDS", "0"))
 _verified_user_cache: dict = {}
 
 
@@ -247,8 +247,12 @@ def verify_supabase_access_token(token: str) -> str:
     """Return the Supabase auth user ID for a valid access token, else raise 401.
 
     Verification is delegated to Supabase Auth (`auth.get_user`), which checks the
-    signature, expiry and revocation. Successful lookups are cached briefly to keep
-    per-request latency low without trusting client-supplied identity.
+    signature, expiry AND whether the session still exists (sign-out / revocation).
+
+    Caching is OFF by default (AUTH_USER_CACHE_TTL_SECONDS=0) so every request re-checks
+    revocation. Setting a TTL trades one Supabase round-trip per request for a window in
+    which a just-revoked token is still accepted for up to TTL seconds. Only enable it if
+    latency becomes a problem and that window is acceptable.
     """
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
