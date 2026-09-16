@@ -48,9 +48,11 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [entriesLoading, setEntriesLoading] = useState(true);
+  const [entriesError, setEntriesError] = useState<string | null>(null);
 
   const loadEntries = useCallback(async () => {
     setEntriesLoading(true);
+    setEntriesError(null);
     try {
       const data = await fetchVaultEntries();
       setEntries(
@@ -62,8 +64,10 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
           type: (e.type as 'text' | 'voice') || 'text',
         }))
       );
-    } catch {
+    } catch (err) {
+      // Do not pretend the vault is empty when the request failed.
       setEntries([]);
+      setEntriesError(err instanceof Error && err.message ? err.message : 'Unknown error');
     } finally {
       setEntriesLoading(false);
     }
@@ -74,25 +78,22 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
   }, [mode, loadEntries]);
 
   const handleSaveEntry = async (entry: Omit<JournalEntry, 'id' | 'timestamp'>) => {
-    try {
-      const created = await createVaultEntry({
-        content: entry.content,
-        tags: entry.tags,
-        type: entry.type,
-      });
-      setEntries((prev) => [
-        {
-          id: created.id,
-          content: created.content,
-          tags: created.tags,
-          timestamp: new Date(created.created_at),
-          type: (created.type as 'text' | 'voice') || 'text',
-        },
-        ...prev,
-      ]);
-    } catch {
-      /* show error toast if desired */
-    }
+    // Errors propagate to VaultEntry, which keeps the editor content and shows them.
+    const created = await createVaultEntry({
+      content: entry.content,
+      tags: entry.tags,
+      type: entry.type,
+    });
+    setEntries((prev) => [
+      {
+        id: created.id,
+        content: created.content,
+        tags: Array.isArray(created.tags) ? created.tags : [],
+        timestamp: new Date(created.created_at),
+        type: (created.type as 'text' | 'voice') || 'text',
+      },
+      ...prev,
+    ]);
   };
 
   const handleExport = () => {
@@ -173,6 +174,21 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
           <div className="space-y-4">
             {entriesLoading ? (
               <div className="text-center py-12 text-[#e8e8f0]/50">Loading...</div>
+            ) : entriesError ? (
+              <div
+                role="alert"
+                data-testid="vault-load-error"
+                className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-6 text-center text-sm text-red-200"
+              >
+                <p className="font-semibold">Could not load your vault.</p>
+                <p className="mt-1 break-words text-red-200/80">{entriesError}</p>
+                <button
+                  onClick={() => loadEntries()}
+                  className="mt-3 px-4 py-2 bg-purple-600/20 text-purple-300 rounded-lg hover:bg-purple-600/30 transition-all"
+                >
+                  Retry
+                </button>
+              </div>
             ) : filteredEntries.length === 0 ? (
               <div className="text-center py-12 text-[#e8e8f0]/50">
                 {entries.length === 0 ? 'Your vault is empty. Begin your journey above.' : 'No entries match your search.'}

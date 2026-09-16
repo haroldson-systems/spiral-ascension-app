@@ -1,4 +1,4 @@
-import { withAuthHeaders } from '@/lib/apiAuth';
+import { withAuthHeaders, apiErrorMessage } from '@/lib/apiAuth';
 
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ??
@@ -10,7 +10,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   await withAuthHeaders(headers);
 
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  if (!res.ok) throw new Error(await res.text() || `Request failed: ${res.status}`);
+  if (!res.ok) throw new Error(await apiErrorMessage(res));
   return res.json() as Promise<T>;
 }
 
