@@ -19,9 +19,11 @@ function getStoredMode(): VaultMode {
 
 interface VaultSectionProps {
   initialMode?: VaultMode;
+  /** Called after the user toggles the mode (e.g. to keep the URL in sync). */
+  onModeChange?: (mode: VaultMode) => void;
 }
 
-export default function VaultSection({ initialMode }: VaultSectionProps) {
+export default function VaultSection({ initialMode, onModeChange }: VaultSectionProps) {
   const [mode, setMode] = useState<VaultMode>(() =>
     initialMode ?? getStoredMode()
   );
@@ -46,6 +48,7 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
     } catch {
       /* Ignore unavailable localStorage. */
     }
+    onModeChange?.(m);
   };
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
