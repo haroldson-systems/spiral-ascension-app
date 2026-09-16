@@ -23,7 +23,9 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     lastKnownHasAccess,
     lastKnownOwnerAccess,
     refreshAccess,
+    subscriptionStatus,
   } = useMembershipAccess();
+  const paymentProblem = subscriptionStatus === 'past_due' || subscriptionStatus === 'unpaid';
   const [showSlowLoadingHelp, setShowSlowLoadingHelp] = useState(false);
   const hasTrustedAccess = hasAccess || hasOwnerAccess || (isAuthenticated && (lastKnownHasAccess || lastKnownOwnerAccess));
 
@@ -151,22 +153,34 @@ export function AppAccessGate({ children }: { children: ReactNode }) {
     return (
       <GateShell>
         <div className="w-full max-w-md space-y-5 rounded-3xl border border-purple-700/40 bg-purple-950/40 p-8 shadow-2xl backdrop-blur">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Membership required</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            {paymentProblem ? 'Payment needs attention' : 'Membership required'}
+          </h1>
           <p className="text-sm text-purple-100/85 leading-relaxed">
-            An active or trialing subscription is required to open this area. If you just finished checkout, it may
-            take a moment to sync—refresh after a short wait.
+            {paymentProblem
+              ? 'Your last payment did not go through, so access is paused. Update your payment method in billing and you will be back in right away.'
+              : 'An active or trialing subscription is required to open this area. If you just finished checkout, it may take a moment to sync—refresh after a short wait.'}
           </p>
           {userEmail ? (
             <p className="text-xs text-purple-200/90">
               Signed in as <span className="font-semibold text-white">{userEmail}</span>
             </p>
           ) : null}
-          <Link
-            to="/subscribe"
-            className="inline-flex items-center justify-center rounded-lg border-2 border-[#d4af37] px-6 py-3 font-semibold text-[#d4af37] transition hover:bg-[#d4af37]/10"
-          >
-            View membership options
-          </Link>
+          {paymentProblem ? (
+            <Link
+              to="/account"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-[#d4af37] bg-gradient-to-r from-purple-700 to-purple-900 px-6 py-3 font-semibold text-white shadow-lg shadow-purple-900/40 transition hover:from-purple-600 hover:to-purple-800"
+            >
+              Update payment method
+            </Link>
+          ) : (
+            <Link
+              to="/subscribe"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-[#d4af37] px-6 py-3 font-semibold text-[#d4af37] transition hover:bg-[#d4af37]/10"
+            >
+              View membership options
+            </Link>
+          )}
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-lg border border-purple-500/40 px-6 py-3 font-medium text-purple-100 transition hover:bg-purple-900/40"

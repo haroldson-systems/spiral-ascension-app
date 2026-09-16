@@ -97,6 +97,9 @@ class FakeQuery:
             return FakeResponse([copy.deepcopy(r) for r in rows if self._matches(r)])
         if self._op == "insert":
             doc = dict(self._payload)
+            if self._table == "billing_webhook_events" and any(r["event_id"] == doc["event_id"] for r in rows):
+                from postgrest.exceptions import APIError
+                raise APIError({"message": 'duplicate key value violates unique constraint "billing_webhook_events_pkey"', "code": "23505", "hint": None, "details": None})
             doc.setdefault("id", f"row-{len(rows) + 1}")
             doc.setdefault("created_at", "2026-01-01T00:00:00+00:00")
             rows.append(doc)

@@ -12,7 +12,6 @@ import time
 from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
-import requests
 import stripe
 
 
@@ -160,21 +159,6 @@ class AdminAccessResponse(BaseModel):
     via: str
 
 
-class StripeCheckoutSessionRequest(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    email: Optional[str] = None
-    successUrl: str
-    cancelUrl: str
-
-
-class StripeCheckoutSessionResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    sessionId: str
-    url: str
-
-
 class CheckoutSessionCreate(BaseModel):
     email: EmailStr
     successUrl: Optional[str] = None
@@ -202,6 +186,24 @@ class PortalSessionCreate(BaseModel):
 
 class PortalSessionResponse(BaseModel):
     url: str
+
+
+class AccountPortalSessionCreate(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    returnUrl: Optional[str] = None
+
+
+class BillingStatusResponse(BaseModel):
+    hasCustomer: bool
+    status: Optional[str] = None
+    cancelAtPeriodEnd: bool = False
+    trialEnd: Optional[str] = None
+    currentPeriodEnd: Optional[str] = None
+    paymentFailed: bool = False
+    # True when a subscription matches the account email but is not yet bound to this user id
+    # (legacy row awaiting the binding migration / manual link). UI shows "contact support".
+    needsLinking: bool = False
 
 
 class MoonSyncEventIn(BaseModel):
@@ -406,11 +408,6 @@ def require_admin(request: Request) -> None:
     raise HTTPException(status_code=401, detail="Unauthorized")
 
 
-def require_stripe() -> None:
-    if not STRIPE_SECRET_KEY or not STRIPE_PRICE_ID:
-        raise HTTPException(status_code=500, detail="Stripe is not configured")
-
-
 def get_frontend_base_url(request: Request) -> str:
     origin = request.headers.get("origin")
     if origin and origin.startswith("http"):
@@ -564,70 +561,6 @@ async def get_admin_access(request: Request):
     return AdminAccessResponse(authorized=True, email=email, via=via)
 
 
-@api_router.post('/stripe/checkout-session', response_model=StripeCheckoutSessionResponse)
-async def create_stripe_checkout_session(payload: StripeCheckoutSessionRequest):
-    require_stripe()
-    form_data = {
-        "mode": "subscription",
-        "success_url": payload.successUrl,
-        "cancel_url": payload.cancelUrl,
-        "payment_method_collection": "always",
-        "billing_address_collection": "auto",
-        "line_items[0][price]": STRIPE_PRICE_ID,
-        "line_items[0][quantity]": "1",
-        "subscription_data[trial_period_days]": "7",
-        "subscription_data[metadata][product_id]": STRIPE_PRODUCT_ID or "",
-    }
-    if payload.email and payload.email.strip():
-        form_data["customer_email"] = payload.email.strip()
-
-    headers = {"Authorization": f"Bearer {STRIPE_SECRET_KEY}"}
-
-    try:
-        stripe_response = requests.post(
-            "https://api.stripe.com/v1/checkout/sessions",
-            headers=headers,
-            data=form_data,
-            timeout=30,
-        )
-    except requests.RequestException as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Stripe checkout request failed: {exc}",
-        ) from exc
-
-    if not stripe_response.ok:
-        detail = stripe_response.text or "Stripe returned an error"
-        try:
-            err_body = stripe_response.json()
-            err_obj = err_body.get("error")
-            if isinstance(err_obj, dict) and err_obj.get("message"):
-                detail = err_obj["message"]
-            elif isinstance(err_obj, str):
-                detail = err_obj
-        except (ValueError, TypeError):
-            pass
-        raise HTTPException(status_code=502, detail=detail)
-
-    try:
-        session_json = stripe_response.json()
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="Stripe returned invalid JSON",
-        ) from exc
-
-    session_id = session_json.get("id")
-    session_url = session_json.get("url")
-    if not session_id or not session_url:
-        raise HTTPException(
-            status_code=502,
-            detail="Stripe response missing session id or url",
-        )
-
-    return StripeCheckoutSessionResponse(sessionId=session_id, url=session_url)
-
-
 @api_router.post("/billing/checkout-session", response_model=CheckoutSessionResponse)
 async def create_checkout_session(payload: CheckoutSessionCreate, request: Request):
     ensure_stripe_configured()
@@ -729,6 +662,197 @@ async def create_portal_session(payload: PortalSessionCreate, request: Request):
     return PortalSessionResponse(url=portal_session.url)
 
 
+# --- Billing: signed-in portal access + status -----------------------------------
+
+def _billing_row_for_identity(identity: dict) -> Optional[dict]:
+    """Most recent billing snapshot BOUND to the verified user id (never matched by email)."""
+    rows = _billing_rows_bound_to_user(identity["id"])
+    if not rows:
+        return None
+    rows.sort(key=lambda r: r.get("updated_at") or "", reverse=True)
+    with_customer = [r for r in rows if r.get("stripe_customer_id")]
+    return (with_customer or rows)[0]
+
+
+@api_router.get("/billing/status", response_model=BillingStatusResponse)
+async def get_billing_status(request: Request):
+    """Subscription state for the signed-in user (used by the account page + access gate)."""
+    identity = get_verified_identity(request)
+    row = _billing_row_for_identity(identity)
+    needs_linking = bool(_billing_rows_matching_email_unbound(identity.get("email")))
+    if not row:
+        return BillingStatusResponse(hasCustomer=False, needsLinking=needs_linking)
+    metadata = row.get("metadata") or {}
+    return BillingStatusResponse(
+        needsLinking=needs_linking,
+        hasCustomer=bool(row.get("stripe_customer_id")),
+        status=row.get("status"),
+        cancelAtPeriodEnd=bool(row.get("cancel_at_period_end")),
+        trialEnd=row.get("trial_end"),
+        currentPeriodEnd=row.get("current_period_end"),
+        paymentFailed=bool(metadata.get("last_payment_failed_at")) and (row.get("status") in ("past_due", "unpaid")),
+    )
+
+
+@api_router.post("/billing/portal", response_model=PortalSessionResponse)
+async def create_account_portal_session(payload: AccountPortalSessionCreate, request: Request):
+    """Open the Stripe customer portal for the signed-in user.
+
+    Authorization is the verified Supabase session; the Stripe customer is the one stored
+    against that user's billing snapshot. An email in the request body is never accepted.
+    """
+    identity = get_verified_identity(request)
+    ensure_stripe_configured()
+
+    row = _billing_row_for_identity(identity)
+    customer_id = row.get("stripe_customer_id") if row else None
+    if not customer_id:
+        if _billing_rows_matching_email_unbound(identity.get("email")):
+            raise HTTPException(
+                status_code=409,
+                detail="A subscription matches your email but is not linked to this account yet. Contact support to link it.",
+            )
+        raise HTTPException(status_code=404, detail="No subscription is linked to this account yet.")
+
+    base_url = get_frontend_base_url(request)
+    return_url = payload.returnUrl or f"{base_url}/account"
+    if not return_url.startswith(base_url):
+        return_url = f"{base_url}/account"
+
+    try:
+        portal_session = stripe.billing_portal.Session.create(customer=customer_id, return_url=return_url)
+    except Exception as exc:
+        logger.exception("Failed to create billing portal session for user %s", identity["id"][:8])
+        raise HTTPException(status_code=502, detail="Could not open the billing portal. Please try again.") from exc
+
+    logger.info("Billing portal opened user=%s customer=%s", identity["id"][:8], customer_id)
+    return PortalSessionResponse(url=portal_session.url)
+
+
+# --- Billing: Stripe webhook (idempotent) -----------------------------------------
+
+WEBHOOK_EVENTS_TABLE = "billing_webhook_events"
+
+
+def claim_webhook_event(event_id: str, event_type: str) -> bool:
+    """Record the Stripe event id. Returns False if it was already processed.
+
+    Requires the `billing_webhook_events` table (supabase_billing_webhook_events_migration.sql).
+    The table is a release requirement: if it is missing the webhook answers 503 so Stripe retries
+    and the failure is visible in the Stripe Dashboard, rather than silently processing duplicates.
+    """
+    try:
+        supabase.table(WEBHOOK_EVENTS_TABLE).insert(
+            {
+                "event_id": event_id,
+                "event_type": event_type,
+                "received_at": datetime.now(timezone.utc).isoformat(),
+            }
+        ).execute()
+        return True
+    except PostgrestAPIError as exc:
+        message = str(exc)
+        if "23505" in message or "duplicate key" in message.lower():
+            return False
+        if is_missing_table_error(exc, WEBHOOK_EVENTS_TABLE):
+            # Fail closed: without the dedupe table we cannot guarantee idempotency, so answer 503
+            # (Stripe retries with backoff) and make the missing migration loud instead of silent.
+            logger.error(
+                "billing_webhook_events table missing – run supabase_billing_webhook_events_migration.sql; "
+                "webhook event %s rejected with 503 until then", event_id,
+            )
+            raise HTTPException(status_code=503, detail="Webhook idempotency table missing; migration required")
+        raise
+
+
+def release_webhook_event(event_id: str) -> None:
+    try:
+        supabase.table(WEBHOOK_EVENTS_TABLE).delete().eq("event_id", event_id).execute()
+    except Exception:
+        logger.info("Could not release webhook event claim %s", event_id)
+
+
+def _refresh_subscription_row(
+    subscription_id: str,
+    extra_metadata: Optional[dict] = None,
+    extra_user_id: Optional[str] = None,
+    **doc_overrides,
+) -> Optional[dict]:
+    subscription = stripe.Subscription.retrieve(subscription_id, expand=["items.data.price"])
+    doc = build_billing_subscription_doc(subscription, **doc_overrides)
+    if extra_metadata:
+        doc["metadata"] = {**doc.get("metadata", {}), **extra_metadata}
+    if extra_user_id and not doc.get("user_id"):
+        doc["user_id"] = extra_user_id
+    if doc.get("stripe_subscription_id"):
+        upsert_billing_subscription(doc)
+    return doc
+
+
+def _handle_stripe_event(event_type: str, data_object) -> Optional[str]:
+    """Apply one Stripe event to billing_subscriptions. Returns a short outcome for logging."""
+    if event_type == "checkout.session.completed":
+        mode = getattr(data_object, "mode", None)
+        subscription_id = extract_stripe_id(getattr(data_object, "subscription", None))
+        if mode != "subscription" or not subscription_id:
+            return "ignored (not a subscription checkout)"
+        customer_details = getattr(data_object, "customer_details", None)
+        session_email = getattr(customer_details, "email", None) if customer_details else None
+        if not session_email:
+            session_email = getattr(data_object, "customer_email", None)
+        client_reference_id = getattr(data_object, "client_reference_id", None)
+        _refresh_subscription_row(
+            subscription_id,
+            extra_user_id=str(client_reference_id) if client_reference_id else None,
+            customer_email=session_email,
+            checkout_session_id=getattr(data_object, "id", None),
+        )
+        return f"subscription {subscription_id} linked" + (f" user={str(client_reference_id)[:8]}" if client_reference_id else "")
+
+    if event_type in (
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    ):
+        doc = build_billing_subscription_doc(data_object)
+        if doc.get("stripe_subscription_id"):
+            upsert_billing_subscription(doc)
+            return f"subscription {doc['stripe_subscription_id']} -> {doc['status']}"
+        return "ignored (no subscription id)"
+
+    if event_type == "invoice.payment_failed":
+        subscription_id = extract_stripe_id(getattr(data_object, "subscription", None))
+        if not subscription_id:
+            return "ignored (invoice without subscription)"
+        attempt = getattr(data_object, "attempt_count", None)
+        next_attempt = iso_from_stripe_timestamp(getattr(data_object, "next_payment_attempt", None))
+        doc = _refresh_subscription_row(
+            subscription_id,
+            extra_metadata={
+                "last_payment_failed_at": datetime.now(timezone.utc).isoformat(),
+                "last_payment_attempt_count": attempt,
+                "next_payment_attempt": next_attempt,
+            },
+        )
+        # Stripe Smart Retries + dunning emails handle the customer contact (Dashboard setting).
+        return f"payment failed for {subscription_id} (attempt {attempt}, next {next_attempt or 'none'}) -> {doc['status'] if doc else '?'}"
+
+    if event_type in ("invoice.paid", "invoice.payment_succeeded"):
+        subscription_id = extract_stripe_id(getattr(data_object, "subscription", None))
+        if not subscription_id:
+            return "ignored (invoice without subscription)"
+        doc = _refresh_subscription_row(
+            subscription_id,
+            extra_metadata={"last_payment_failed_at": None, "last_payment_attempt_count": None, "next_payment_attempt": None},
+        )
+        return f"payment ok for {subscription_id} -> {doc['status'] if doc else '?'}"
+
+    if event_type == "customer.subscription.trial_will_end":
+        return "trial ending soon (no action)"
+
+    return "unhandled"
+
+
 @api_router.post("/billing/webhook")
 async def billing_webhook(request: Request):
     ensure_stripe_webhook_configured()
@@ -738,61 +862,37 @@ async def billing_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Missing stripe-signature header")
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, STRIPE_WEBHOOK_SECRET
-        )
+        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
     except Exception as exc:
         if exc.__class__.__name__ == "SignatureVerificationError":
+            logger.warning("Stripe webhook rejected: invalid signature")
             raise HTTPException(status_code=400, detail="Invalid signature")
         raise
 
+    event_id = event["id"]
     event_type = event["type"]
     data_object = event["data"]["object"]
 
-    if event_type == "checkout.session.completed":
-        mode = getattr(data_object, "mode", None)
-        subscription_id = extract_stripe_id(getattr(data_object, "subscription", None))
-        if mode == "subscription" and subscription_id:
-            customer_details = getattr(data_object, "customer_details", None)
-            session_email = (
-                getattr(customer_details, "email", None) if customer_details else None
-            )
-            if not session_email:
-                session_email = getattr(data_object, "customer_email", None)
-            checkout_session_id = getattr(data_object, "id", None)
-            subscription = stripe.Subscription.retrieve(
-                subscription_id,
-                expand=["items.data.price"],
-            )
-            doc = build_billing_subscription_doc(
-                subscription,
-                customer_email=session_email,
-                checkout_session_id=checkout_session_id,
-            )
-            client_reference_id = getattr(data_object, "client_reference_id", None)
-            if client_reference_id and not doc.get("user_id"):
-                doc["user_id"] = str(client_reference_id)
-            if doc.get("stripe_subscription_id"):
-                upsert_billing_subscription(doc)
+    if not claim_webhook_event(event_id, event_type):
+        logger.info("Stripe webhook duplicate ignored event=%s type=%s", event_id, event_type)
+        return {"received": True, "eventType": event_type, "duplicate": True}
 
-    elif event_type in (
-        "customer.subscription.created",
-        "customer.subscription.updated",
-        "customer.subscription.deleted",
-    ):
-        doc = build_billing_subscription_doc(data_object)
-        if doc.get("stripe_subscription_id"):
-            upsert_billing_subscription(doc)
+    try:
+        outcome = _handle_stripe_event(event_type, data_object)
+    except HTTPException:
+        release_webhook_event(event_id)
+        raise
+    except Exception:
+        # Release the claim so Stripe's retry can reprocess, and answer 500 to trigger it.
+        release_webhook_event(event_id)
+        logger.exception("Stripe webhook processing failed event=%s type=%s", event_id, event_type)
+        raise HTTPException(status_code=500, detail="Webhook processing failed")
 
-    return {"received": True, "eventType": event_type}
+    logger.info("Stripe webhook processed event=%s type=%s outcome=%s", event_id, event_type, outcome)
+    return {"received": True, "eventType": event_type, "outcome": outcome}
 
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
 
 @api_router.get("/practices", response_model=List[Practice])
 async def list_practices():

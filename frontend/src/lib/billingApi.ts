@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { getAccessToken } from '@/lib/apiAuth';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
@@ -81,5 +82,36 @@ export async function createPortalSession(
   return request<PortalSessionResponse>('/billing/portal-session', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+// --- Signed-in billing (authorization = Supabase session, customer = stored Stripe id) ---
+
+export interface BillingStatus {
+  hasCustomer: boolean;
+  status: string | null;
+  cancelAtPeriodEnd: boolean;
+  trialEnd: string | null;
+  currentPeriodEnd: string | null;
+  paymentFailed: boolean;
+  needsLinking: boolean;
+}
+
+async function authedRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getAccessToken();
+  const headers = new Headers(options.headers ?? {});
+  headers.set('Authorization', `Bearer ${token}`);
+  return request<T>(path, { ...options, headers });
+}
+
+export async function fetchBillingStatus(): Promise<BillingStatus> {
+  return authedRequest<BillingStatus>('/billing/status');
+}
+
+/** Open the Stripe customer portal for the signed-in user (manage / cancel / update card). */
+export async function createAccountPortalSession(returnUrl?: string): Promise<PortalSessionResponse> {
+  return authedRequest<PortalSessionResponse>('/billing/portal', {
+    method: 'POST',
+    body: JSON.stringify({ returnUrl }),
   });
 }
