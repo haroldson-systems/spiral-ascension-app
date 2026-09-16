@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabaseClient';
+
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -51,8 +53,18 @@ export interface PortalSessionResponse {
 export async function createCheckoutSession(
   payload: CheckoutSessionPayload
 ): Promise<CheckoutSessionResponse> {
+  // If the buyer is signed in, pass the session so the subscription is bound to their user id
+  // (durable ownership for billing portal / account deletion). Guests still check out normally.
+  const headers = new Headers();
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session?.access_token) headers.set('Authorization', `Bearer ${data.session.access_token}`);
+  } catch {
+    /* guest checkout */
+  }
   return request<CheckoutSessionResponse>('/billing/checkout-session', {
     method: 'POST',
+    headers,
     body: JSON.stringify(payload),
   });
 }
