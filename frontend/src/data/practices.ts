@@ -87,7 +87,7 @@ export const practices: Practice[] = [
     duration: "30 min",
     level: "Intermediate",
     image: legacyPracticeImages["spiral-axis-protocol"],
-    description: "Walk your breath down six phases to ignite, center, compress, and radiate coherent power.",
+    description: "Ignite the base, center the column, compress the charge, then radiate it outward. A six-phase breath ritual for building a stable, coherent axis of power.",
   },
   {
     id: "breathwork-compendium",
