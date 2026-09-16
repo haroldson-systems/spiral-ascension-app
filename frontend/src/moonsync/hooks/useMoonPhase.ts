@@ -8,6 +8,27 @@ export type MoonPhaseData = {
   nextPhase: { name: string; date: Date } | null;
 };
 
+/**
+ * SunCalc's `phase` is a continuous 0..1 value that is practically never *exactly* 0, 0.25,
+ * 0.5 or 0.75, so the four major phases need a tolerance window. Half a day on either side
+ * (0.5 day / 29.53 days ≈ 0.017) matches how almanacs label "New/Full/Quarter Moon" for a
+ * whole calendar day.
+ */
+const SYNODIC_DAYS = 29.53;
+export const MAJOR_PHASE_TOLERANCE = 0.5 / SYNODIC_DAYS;
+
+export function getPhaseName(p: number, tolerance: number = MAJOR_PHASE_TOLERANCE): string {
+  const near = (target: number) => Math.abs(p - target) <= tolerance;
+  if (near(0) || near(1)) return 'New Moon';
+  if (near(0.25)) return 'First Quarter';
+  if (near(0.5)) return 'Full Moon';
+  if (near(0.75)) return 'Last Quarter';
+  if (p < 0.25) return 'Waxing Crescent';
+  if (p < 0.5) return 'Waxing Gibbous';
+  if (p < 0.75) return 'Waning Gibbous';
+  return 'Waning Crescent';
+}
+
 export function useMoonPhase(date: Date = new Date()): MoonPhaseData | null {
   const [data, setData] = useState<MoonPhaseData | null>(null);
 
@@ -15,17 +36,6 @@ export function useMoonPhase(date: Date = new Date()): MoonPhaseData | null {
     const moon = SunCalc.getMoonIllumination(date);
     const frac = moon.fraction;
     const phaseAngle = moon.phase; // 0 → new → 0.5 full → 1 new
-
-    const getPhaseName = (p: number) => {
-      if (p === 0) return 'New Moon';
-      if (p > 0 && p < 0.25) return 'Waxing Crescent';
-      if (p === 0.25) return 'First Quarter';
-      if (p > 0.25 && p < 0.5) return 'Waxing Gibbous';
-      if (p === 0.5) return 'Full Moon';
-      if (p > 0.5 && p < 0.75) return 'Waning Gibbous';
-      if (p === 0.75) return 'Last Quarter';
-      return 'Waning Crescent';
-    };
 
     const phaseName = getPhaseName(phaseAngle);
 
@@ -41,7 +51,7 @@ export function useMoonPhase(date: Date = new Date()): MoonPhaseData | null {
       for (let i = 0; i < majorPhases.length; i += 1) {
         const { name, target } = majorPhases[i];
         if (target > phaseAngle) {
-          const diffDays = Math.abs(target - phaseAngle) * 29.53;
+          const diffDays = Math.abs(target - phaseAngle) * SYNODIC_DAYS;
           const nextDate = new Date(date);
           nextDate.setDate(date.getDate() + diffDays);
           return { name, date: nextDate };
