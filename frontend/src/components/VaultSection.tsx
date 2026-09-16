@@ -26,16 +26,18 @@ export default function VaultSection({ initialMode }: VaultSectionProps) {
     initialMode ?? getStoredMode()
   );
 
+  // Apply the URL-provided mode only when the URL value itself changes.
+  // Depending on `mode` here re-ran the effect after every user toggle and
+  // forced the view straight back to `initialMode` (the "flicker" bug).
   useEffect(() => {
-    if (initialMode && initialMode !== mode) {
-      setMode(initialMode);
-      try {
-        localStorage.setItem(VAULT_MODE_KEY, initialMode);
-      } catch {
-        /* Ignore unavailable localStorage. */
-      }
+    if (!initialMode) return;
+    setMode(initialMode);
+    try {
+      localStorage.setItem(VAULT_MODE_KEY, initialMode);
+    } catch {
+      /* Ignore unavailable localStorage. */
     }
-  }, [initialMode, mode]);
+  }, [initialMode]);
 
   const setModeAndStore = (m: VaultMode) => {
     setMode(m);
