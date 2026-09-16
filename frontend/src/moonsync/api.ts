@@ -1,11 +1,10 @@
 import { Event, eventTypeKey, eventTypeFromKey, lunarPhaseKey, lunarPhaseFromKey } from './backend';
-import { supabase } from '@/lib/supabaseClient';
+import { getAccessToken } from '@/lib/apiAuth';
 
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ??
   (import.meta.env.VITE_API_URL_LOCAL as string | undefined) ??
   'http://127.0.0.1:8001/api';
-const LOCAL_USER_KEY = 'moonsync-user-id';
 const REQUEST_TIMEOUT_MS = 8000;
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
@@ -26,64 +25,13 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs = REQUEST_TIMEOUT_M
   });
 }
 
-function getStoredUserId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return localStorage.getItem(LOCAL_USER_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function storeUserId(userId: string) {
-  if (typeof window === 'undefined') return;
-  try {
-    if (!userId) {
-      localStorage.removeItem(LOCAL_USER_KEY);
-    } else {
-      localStorage.setItem(LOCAL_USER_KEY, userId);
-    }
-  } catch {
-    /* ignore storage errors */
-  }
-}
-
-async function getUserId(): Promise<string> {
-  try {
-    const { data: userData } = await withTimeout(supabase.auth.getUser());
-    if (userData?.user?.id) {
-      storeUserId(userData.user.id);
-      return userData.user.id;
-    }
-  } catch {
-    /* ignore and try anonymous */
-  }
-
-  try {
-    const { data, error } = await withTimeout(supabase.auth.signInAnonymously());
-    if (!error && data.user?.id) {
-      storeUserId(data.user.id);
-      return data.user.id;
-    }
-  } catch {
-    /* ignore and surface error below */
-  }
-
-  const stored = getStoredUserId();
-  if (stored) {
-    // Stored IDs are only valid if auth exists; clear to avoid FK issues.
-    storeUserId('');
-  }
-  throw new Error('Supabase anonymous auth is required for MoonSync');
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers ?? {});
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const userId = await getUserId();
-  headers.set('x-moonsync-user', userId);
+  const token = await withTimeout(getAccessToken());
+  headers.set('Authorization', `Bearer ${token}`);
 
   const response = await withTimeout(
     fetch(`${API_BASE}${path}`, {

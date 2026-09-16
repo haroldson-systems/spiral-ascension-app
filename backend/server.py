@@ -4,9 +4,9 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import List, Optional
-import uuid
+import time
 from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
@@ -84,16 +84,6 @@ SITE_SETTINGS_STATE = {
 
 
 # Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
 class Practice(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -233,11 +223,75 @@ class MoonSyncEventUpdate(BaseModel):
     eventAt: str
 
 
-def get_moonsync_user_id(request: Request) -> str:
-    user_id = request.headers.get("x-moonsync-user")
+# --- Authenticated user identity (Vault / MoonSync) ---
+#
+# User-scoped endpoints derive the user ID ONLY from a Supabase access token
+# (Authorization: Bearer <jwt>) verified server-side via Supabase Auth. The
+# legacy `x-moonsync-user` header is never trusted for scoping; if a client
+# still sends it and it disagrees with the verified identity, the request is
+# rejected so a mismatch can never silently touch another user's rows.
+
+AUTH_USER_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_USER_CACHE_TTL_SECONDS", "60"))
+_verified_user_cache: dict = {}
+
+
+def extract_bearer_token(request: Request) -> str:
+    auth_header = request.headers.get("authorization", "")
+    bearer_prefix = "bearer "
+    if not auth_header.lower().startswith(bearer_prefix):
+        return ""
+    return auth_header[len(bearer_prefix):].strip()
+
+
+def verify_supabase_access_token(token: str) -> str:
+    """Return the Supabase auth user ID for a valid access token, else raise 401.
+
+    Verification is delegated to Supabase Auth (`auth.get_user`), which checks the
+    signature, expiry and revocation. Successful lookups are cached briefly to keep
+    per-request latency low without trusting client-supplied identity.
+    """
+    if not token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    now = time.monotonic()
+    cached = _verified_user_cache.get(token)
+    if cached and cached[0] > now:
+        return cached[1]
+
+    try:
+        auth_response = supabase.auth.get_user(token)
+    except Exception:
+        logger.info("Rejected request: Supabase access token could not be verified")
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    user = getattr(auth_response, "user", None)
+    user_id = getattr(user, "id", None)
     if not user_id:
-        raise HTTPException(status_code=400, detail="Missing x-moonsync-user header")
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    user_id = str(user_id)
+    if AUTH_USER_CACHE_TTL_SECONDS > 0:
+        if len(_verified_user_cache) > 5000:
+            _verified_user_cache.clear()
+        _verified_user_cache[token] = (now + AUTH_USER_CACHE_TTL_SECONDS, user_id)
     return user_id
+
+
+def get_current_user_id(request: Request) -> str:
+    """FastAPI dependency: the verified user ID for user-scoped endpoints."""
+    user_id = verify_supabase_access_token(extract_bearer_token(request))
+
+    legacy_header = request.headers.get("x-moonsync-user")
+    if legacy_header and legacy_header.strip() != user_id:
+        logger.warning("Rejected request: x-moonsync-user header does not match verified user")
+        raise HTTPException(status_code=403, detail="User identity mismatch")
+
+    return user_id
+
+
+def get_moonsync_user_id(request: Request) -> str:
+    # Backwards-compatible name used by the MoonSync/Vault handlers.
+    return get_current_user_id(request)
 
 
 def ensure_moonsync_user_row(user_id: str) -> None:
@@ -693,31 +747,6 @@ async def billing_webhook(request: Request):
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-
-    # Convert to dict and serialize datetime to ISO string for Supabase
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-
-    response = supabase.table("status_checks").insert(doc).execute()
-    _ = get_data(response)
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    response = supabase.table("status_checks").select("*").order("timestamp", desc=True).execute()
-    status_checks = get_data(response) or []
-
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
 
 @api_router.get("/practices", response_model=List[Practice])
 async def list_practices():

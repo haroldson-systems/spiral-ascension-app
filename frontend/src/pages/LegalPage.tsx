@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Footer from '@/components/Footer';
 
 type LegalPageProps = {
   title: string;
@@ -9,8 +10,8 @@ type LegalPageProps = {
 
 export function LegalPageShell({ title, eyebrow, children }: LegalPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] text-[#e8e8f0]">
-      <main className="mx-auto max-w-3xl px-6 py-16">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] text-[#e8e8f0]">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-16">
         <Link to="/" className="mb-10 inline-flex text-sm font-semibold text-[#d4af37] hover:text-[#f0cf63]">
           Back to Spiral Ascension
         </Link>
@@ -22,6 +23,7 @@ export function LegalPageShell({ title, eyebrow, children }: LegalPageProps) {
           {children}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
