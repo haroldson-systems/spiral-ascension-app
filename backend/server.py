@@ -1,4 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Query
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
@@ -243,8 +245,9 @@ def extract_bearer_token(request: Request) -> str:
     return auth_header[len(bearer_prefix):].strip()
 
 
-def verify_supabase_access_token(token: str) -> str:
-    """Return the Supabase auth user ID for a valid access token, else raise 401.
+def verify_supabase_access_token(token: str) -> dict:
+    """Return the verified identity {id, email, created_at, is_anonymous} for a valid
+    Supabase access token, else raise 401.
 
     Verification is delegated to Supabase Auth (`auth.get_user`), which checks the
     signature, expiry and revocation. Successful lookups are cached briefly to keep
@@ -256,7 +259,7 @@ def verify_supabase_access_token(token: str) -> str:
     now = time.monotonic()
     cached = _verified_user_cache.get(token)
     if cached and cached[0] > now:
-        return cached[1]
+        return dict(cached[1])
 
     try:
         auth_response = supabase.auth.get_user(token)
@@ -269,24 +272,34 @@ def verify_supabase_access_token(token: str) -> str:
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
 
-    user_id = str(user_id)
+    identity = {
+        "id": str(user_id),
+        "email": getattr(user, "email", None) or None,
+        "created_at": str(getattr(user, "created_at", "") or "") or None,
+        "is_anonymous": bool(getattr(user, "is_anonymous", False)),
+    }
     if AUTH_USER_CACHE_TTL_SECONDS > 0:
         if len(_verified_user_cache) > 5000:
             _verified_user_cache.clear()
-        _verified_user_cache[token] = (now + AUTH_USER_CACHE_TTL_SECONDS, user_id)
-    return user_id
+        _verified_user_cache[token] = (now + AUTH_USER_CACHE_TTL_SECONDS, identity)
+    return dict(identity)
 
 
-def get_current_user_id(request: Request) -> str:
-    """FastAPI dependency: the verified user ID for user-scoped endpoints."""
-    user_id = verify_supabase_access_token(extract_bearer_token(request))
+def get_verified_identity(request: Request) -> dict:
+    """Verified identity for user-scoped endpoints (never derived from client input)."""
+    identity = verify_supabase_access_token(extract_bearer_token(request))
 
     legacy_header = request.headers.get("x-moonsync-user")
-    if legacy_header and legacy_header.strip() != user_id:
+    if legacy_header and legacy_header.strip() != identity["id"]:
         logger.warning("Rejected request: x-moonsync-user header does not match verified user")
         raise HTTPException(status_code=403, detail="User identity mismatch")
 
-    return user_id
+    return identity
+
+
+def get_current_user_id(request: Request) -> str:
+    """FastAPI helper: the verified user ID for user-scoped endpoints."""
+    return get_verified_identity(request)["id"]
 
 
 def get_moonsync_user_id(request: Request) -> str:
@@ -1203,6 +1216,222 @@ async def list_moonsync_phases(request: Request, year: Optional[int] = Query(def
     target_year = year or datetime.now(timezone.utc).year
     anchor = parse_anchor_date(anchor_value)
     return calculate_lunar_phases(anchor, target_year, cycle_mode)
+
+
+# --- Account: export + deletion (Privacy Policy tools) ---
+#
+# Both endpoints act only on the identity verified from the Supabase access token.
+#
+# What deletion removes / keeps (also documented in ACCOUNT_DATA.md):
+#   removed : vault_entries, spiral_notes, moonsync_events, moonsync_settings,
+#             public.users row, Supabase auth user (email, password hash, sessions)
+#   handled : active Stripe subscriptions are cancelled immediately (before any data
+#             is removed – if Stripe fails, nothing is deleted)
+#   retained: billing_subscriptions rows with customer_email scrubbed (Stripe ids,
+#             status, period dates) – needed for payment/tax/chargeback records; the
+#             Stripe customer + invoices stay in Stripe for the same reason.
+
+ACCOUNT_DELETE_CONFIRMATION = "DELETE"
+USER_OWNED_TABLES = ("vault_entries", "spiral_notes", "moonsync_events", "moonsync_settings")
+ACTIVE_SUBSCRIPTION_STATUSES = {"trialing", "active", "past_due", "unpaid", "incomplete", "paused"}
+
+
+class AccountDeleteRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    confirmation: str
+
+
+def _rows_for_user(table: str, user_id: str, columns: str = "*") -> list:
+    try:
+        response = supabase.table(table).select(columns).eq("user_id", user_id).execute()
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, table):
+            return []
+        raise
+    return get_data(response) or []
+
+
+def _billing_rows_for_email(email: Optional[str]) -> list:
+    if not email:
+        return []
+    try:
+        response = (
+            supabase.table("billing_subscriptions")
+            .select("*")
+            .ilike("customer_email", email.strip())
+            .execute()
+        )
+    except PostgrestAPIError as exc:
+        if is_missing_table_error(exc, "billing_subscriptions"):
+            return []
+        raise
+    return get_data(response) or []
+
+
+def _public_billing_view(row: dict) -> dict:
+    return {
+        "status": row.get("status"),
+        "cancelAtPeriodEnd": row.get("cancel_at_period_end"),
+        "trialEnd": row.get("trial_end"),
+        "currentPeriodEnd": row.get("current_period_end"),
+        "updatedAt": row.get("updated_at"),
+    }
+
+
+@api_router.get("/account/export")
+async def export_account_data(request: Request):
+    """Everything Spiral Ascension stores for the signed-in user, as one JSON file."""
+    identity = get_verified_identity(request)
+    user_id = identity["id"]
+
+    export = {
+        "exportVersion": 1,
+        "exportedAt": datetime.now(timezone.utc).isoformat(),
+        "account": {
+            "id": user_id,
+            "email": identity.get("email"),
+            "createdAt": identity.get("created_at"),
+            "isAnonymous": identity.get("is_anonymous", False),
+        },
+        "vault": {
+            "entries": _rows_for_user("vault_entries", user_id, "id,content,tags,type,created_at"),
+            "spiralNotes": _rows_for_user("spiral_notes", user_id, "module_id,content,updated_at"),
+        },
+        "moonsync": {
+            "settings": [
+                {k: v for k, v in row.items() if k != "user_id"}
+                for row in _rows_for_user("moonsync_settings", user_id)
+            ],
+            "events": [
+                {k: v for k, v in row.items() if k != "user_id"}
+                for row in _rows_for_user("moonsync_events", user_id)
+            ],
+        },
+        "billing": {
+            "subscriptions": [_public_billing_view(r) for r in _billing_rows_for_email(identity.get("email"))],
+            "note": "Payment details live in Stripe; use Manage billing to view invoices.",
+        },
+    }
+
+    logger.info("Account export generated for user %s", user_id[:8])
+    filename = f"spiral-ascension-export-{datetime.now(timezone.utc).strftime('%Y%m%d')}.json"
+    return JSONResponse(
+        content=jsonable_encoder(export),
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _cancel_active_subscriptions(billing_rows: list, user_id: str) -> list:
+    """Cancel active Stripe subscriptions immediately. Raises HTTPException on failure."""
+    active = [
+        r for r in billing_rows
+        if r.get("stripe_subscription_id") and (r.get("status") or "") in ACTIVE_SUBSCRIPTION_STATUSES
+    ]
+    if not active:
+        return []
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="An active subscription exists but billing is not configured; account deletion aborted.",
+        )
+    stripe.api_key = STRIPE_SECRET_KEY
+
+    cancelled = []
+    for row in active:
+        sub_id = row["stripe_subscription_id"]
+        try:
+            stripe.Subscription.cancel(sub_id)
+            cancelled.append(sub_id)
+        except Exception as exc:
+            # Already-cancelled subscriptions are fine; anything else aborts before data removal.
+            if "No such subscription" in str(exc) or "canceled" in str(exc).lower():
+                cancelled.append(sub_id)
+                continue
+            logger.exception("Stripe cancellation failed during account deletion for user %s", user_id[:8])
+            raise HTTPException(
+                status_code=502,
+                detail="Could not cancel your subscription. Nothing was deleted – please try again or contact support.",
+            ) from exc
+    return cancelled
+
+
+@api_router.delete("/account")
+async def delete_account(payload: AccountDeleteRequest, request: Request):
+    """Permanently delete the signed-in user's account and owned data."""
+    identity = get_verified_identity(request)
+    user_id = identity["id"]
+    email = identity.get("email")
+
+    if payload.confirmation.strip() != ACCOUNT_DELETE_CONFIRMATION:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Type {ACCOUNT_DELETE_CONFIRMATION} to confirm account deletion.',
+        )
+
+    # 1. Billing first: cancel anything that could keep charging. Aborts on failure.
+    billing_rows = _billing_rows_for_email(email)
+    cancelled = _cancel_active_subscriptions(billing_rows, user_id)
+
+    # 2. Remove user-owned rows (child tables before the parent users row).
+    removed: dict = {}
+    for table in USER_OWNED_TABLES:
+        try:
+            response = supabase.table(table).delete().eq("user_id", user_id).execute()
+            removed[table] = len(get_data(response) or [])
+        except PostgrestAPIError as exc:
+            if is_missing_table_error(exc, table):
+                removed[table] = 0
+                continue
+            logger.exception("Failed deleting %s during account deletion", table)
+            raise HTTPException(
+                status_code=500,
+                detail="Account deletion failed part-way; your subscription was cancelled. Please contact support.",
+            ) from exc
+
+    # 3. Scrub PII from retained billing snapshots (kept for payment records).
+    anonymized = 0
+    for row in billing_rows:
+        if not row.get("id"):
+            continue
+        try:
+            supabase.table("billing_subscriptions").update(
+                {
+                    "customer_email": None,
+                    "metadata": {**(row.get("metadata") or {}), "account_deleted_at": datetime.now(timezone.utc).isoformat()},
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ).eq("id", row["id"]).execute()
+            anonymized += 1
+        except Exception:
+            logger.exception("Failed anonymizing billing row during account deletion")
+
+    # 4. Parent users row, then the auth account itself.
+    try:
+        supabase.table("users").delete().eq("id", user_id).execute()
+    except PostgrestAPIError as exc:
+        if not is_missing_table_error(exc, "users"):
+            logger.exception("Failed deleting users row during account deletion")
+
+    try:
+        supabase.auth.admin.delete_user(user_id)
+    except Exception as exc:
+        logger.exception("Failed deleting auth user during account deletion")
+        raise HTTPException(
+            status_code=500,
+            detail="Your data was removed but the sign-in account could not be deleted. Please contact support.",
+        ) from exc
+
+    logger.info(
+        "Account deleted: user=%s rows=%s subscriptions_cancelled=%d billing_rows_anonymized=%d",
+        user_id[:8], removed, len(cancelled), anonymized,
+    )
+    return {
+        "deleted": True,
+        "removed": removed,
+        "subscriptionsCancelled": len(cancelled),
+        "billingRecordsAnonymized": anonymized,
+    }
 
 # Include the router in the main app
 app.include_router(api_router)
