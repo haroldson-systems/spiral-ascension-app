@@ -54,6 +54,19 @@ function eventTypeValue(e: typeof EventType.ritual): string {
   return JSON.stringify(e);
 }
 
+function newEventId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // RFC 4122 v4 fallback for older WebViews without crypto.randomUUID.
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export default function EventDialog({ open, onOpenChange, event, initialTitle }: EventDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -93,7 +106,10 @@ export default function EventDialog({ open, onOpenChange, event, initialTitle }:
     const dateNanos = BigInt(eventDate.getTime()) * BigInt(1_000_000);
 
     const eventData: Event = {
-      id: event?.id || `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      // `moonsync_events.id` is a Postgres uuid column: a non-UUID id (the old
+      // `event_<timestamp>_<random>` format) is rejected by the database and the
+      // event is never saved.
+      id: event?.id || newEventId(),
       title: title.trim(),
       description: description.trim(),
       eventType,
@@ -110,8 +126,11 @@ export default function EventDialog({ open, onOpenChange, event, initialTitle }:
         toast.success('Event created successfully');
       }
       onOpenChange(false);
-    } catch {
-      toast.error(event ? 'Failed to update event' : 'Failed to create event');
+    } catch (error) {
+      const detail = error instanceof Error && error.message ? error.message : undefined;
+      toast.error(event ? 'Failed to update event' : 'Failed to create event', {
+        description: detail,
+      });
     }
   };
 

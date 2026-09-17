@@ -10,6 +10,8 @@ import pytest
 
 from tests.conftest import TOKEN_A, TOKEN_B, USER_A, USER_B, auth
 
+EVENT_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
 USER_SCOPED_ROUTES = [
     ("GET", "/api/moonsync/settings", None),
     ("POST", "/api/moonsync/settings", {"cycleMode": 13}),
@@ -95,7 +97,7 @@ def test_reads_are_scoped_to_verified_user(client, fake_db):
          "created_at": "2026-01-01T00:00:00+00:00"},
     ]
     fake_db.store["moonsync_events"] = [
-        {"id": "ev-a", "user_id": USER_A, "title": "A event", "event_type": "ritual",
+        {"id": EVENT_A, "user_id": USER_A, "title": "A event", "event_type": "ritual",
          "associated_phase": "newMoon", "event_at": "2026-01-01T00:00:00Z"},
         {"id": "ev-b", "user_id": USER_B, "title": "B event", "event_type": "ritual",
          "associated_phase": "newMoon", "event_at": "2026-01-01T00:00:00Z"},
@@ -122,20 +124,20 @@ def test_writes_are_attributed_to_verified_user_not_payload(client, fake_db):
 
 def test_update_and_delete_cannot_touch_other_users_event(client, fake_db):
     fake_db.store["moonsync_events"] = [
-        {"id": "ev-a", "user_id": USER_A, "title": "A event", "event_type": "ritual",
+        {"id": EVENT_A, "user_id": USER_A, "title": "A event", "event_type": "ritual",
          "associated_phase": "newMoon", "event_at": "2026-01-01T00:00:00Z"},
     ]
 
     client.put(
-        "/api/moonsync/events/ev-a",
+        f"/api/moonsync/events/{EVENT_A}",
         json={"title": "hijacked", "eventType": "ritual",
               "associatedPhase": "fullMoon", "eventAt": "2026-02-01T00:00:00Z"},
         headers=auth(TOKEN_B),
     )
-    client.delete("/api/moonsync/events/ev-a", headers=auth(TOKEN_B))
+    client.delete(f"/api/moonsync/events/{EVENT_A}", headers=auth(TOKEN_B))
 
     assert fake_db.store["moonsync_events"] == [
-        {"id": "ev-a", "user_id": USER_A, "title": "A event", "event_type": "ritual",
+        {"id": EVENT_A, "user_id": USER_A, "title": "A event", "event_type": "ritual",
          "associated_phase": "newMoon", "event_at": "2026-01-01T00:00:00Z"},
     ]
 
