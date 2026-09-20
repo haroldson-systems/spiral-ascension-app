@@ -1,13 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { useLunarPhases, useCyclePreference } from '../hooks/useQueries';
-import { LunarPhase, isThirteenMonth } from '../backend';
 import { Loader2, ChevronDown } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { phaseMeaning } from '../data/phaseMeaning';
-import { getPhaseTimeline } from '../lunarEngine';
-import { getHarmonicTimeline, getHarmonicWindow, getNextHarmonicWindow } from '../harmonicCalendar';
-import { useMoonPhase } from '../hooks/useMoonPhase';
+import { getHarmonicTimeline, getNextHarmonicWindow } from '../harmonicCalendar';
+import { phaseNames, useCurrentPhase } from '../hooks/useCurrentPhase';
 
 const phaseEmojis: Record<string, string> = {
   newMoon: '🌑',
@@ -18,17 +15,6 @@ const phaseEmojis: Record<string, string> = {
   waningGibbous: '🌖',
   lastQuarter: '🌗',
   waningCrescent: '🌘',
-};
-
-const phaseNames: Record<string, string> = {
-  newMoon: 'New Moon',
-  waxingCrescent: 'Waxing Crescent',
-  firstQuarter: 'First Quarter',
-  waxingGibbous: 'Waxing Gibbous',
-  fullMoon: 'Full Moon',
-  waningGibbous: 'Waning Gibbous',
-  lastQuarter: 'Last Quarter',
-  waningCrescent: 'Waning Crescent',
 };
 
 const phaseLoreLinks: Record<string, string> = {
@@ -47,56 +33,20 @@ function formatDate(value: number) {
 }
 
 export default function LunarDisplay() {
-  const { data: preference } = useCyclePreference();
-  const { data: phases, isLoading, isFetching } = useLunarPhases(preference?.cycleType);
-  const [currentPhase, setCurrentPhase] = useState<string>('newMoon');
-  const [nextPhase, setNextPhase] = useState<{ phase: string; date: Date } | null>(null);
+  const {
+    ready,
+    is13Month,
+    phaseKey: currentPhase,
+    nextPhase,
+    harmonic: harmonicCurrent,
+    timeline,
+    isLoading,
+    isFetching,
+  } = useCurrentPhase();
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const is13Month = preference && isThirteenMonth(preference.cycleType);
-  const moonNow = useMoonPhase();
-
-  const timeline = useMemo(() => {
-    if (!phases || phases.length === 0) return null;
-    return getPhaseTimeline(phases, Date.now());
-  }, [phases]);
-
-  useEffect(() => {
-    if (is13Month) {
-      // Harmonic mode uses backend timeline for consistency.
-      if (!timeline) return;
-      setCurrentPhase(timeline.current?.phaseKey ?? 'newMoon');
-      if (timeline.next) {
-        setNextPhase({
-          phase: timeline.next.phaseKey,
-          date: new Date(timeline.next.startMs)
-        });
-      } else {
-        setNextPhase(null);
-      }
-      return;
-    }
-
-    // 12‑month mode: derive current phase from SunCalc hook.
-    if (!moonNow) return;
-    const label = moonNow.phase;
-    const key =
-      Object.entries(phaseNames).find(([, name]) => name === label)?.[0] ?? 'newMoon';
-    setCurrentPhase(key);
-
-    if (moonNow.nextPhase) {
-      const nextLabel = moonNow.nextPhase.name;
-      const nextKey =
-        Object.entries(phaseNames).find(([, name]) => name === nextLabel)?.[0] ??
-        'newMoon';
-      setNextPhase({ phase: nextKey, date: moonNow.nextPhase.date });
-    } else {
-      setNextPhase(null);
-    }
-  }, [timeline, moonNow, is13Month]);
 
   const meaning = phaseMeaning[currentPhase] ?? phaseMeaning.newMoon;
   const currentLoreHref = phaseLoreLinks[currentPhase] ?? '/practice-entry/lore-new-moon';
-  const harmonicCurrent = useMemo(() => getHarmonicWindow(), []);
   const harmonicNext = useMemo(() => getNextHarmonicWindow(), []);
   const harmonicTimeline = useMemo(() => getHarmonicTimeline(), []);
 
@@ -120,7 +70,7 @@ export default function LunarDisplay() {
       <CardHeader>
         <CardTitle className="text-white">{is13Month ? 'Current Harmonic Month' : 'Current Lunar Phase'}</CardTitle>
         <CardDescription className="text-purple-200">
-          {preference && isThirteenMonth(preference.cycleType) ? '13-Month' : '12-Month'} Cycle
+          {ready ? (is13Month ? '13-Month' : '12-Month') : '…'} Cycle
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -165,9 +115,9 @@ export default function LunarDisplay() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-purple-300">Next Phase:</span>
               <div className="flex items-center space-x-2">
-                <span className="text-2xl">{phaseEmojis[nextPhase.phase]}</span>
+                <span className="text-2xl">{phaseEmojis[nextPhase.phaseKey]}</span>
                 <div className="text-right">
-                  <div className="font-medium text-white">{phaseNames[nextPhase.phase]}</div>
+                  <div className="font-medium text-white">{phaseNames[nextPhase.phaseKey]}</div>
                   <div className="text-xs text-purple-300">
                     {formatDate(nextPhase.date.getTime())}
                   </div>

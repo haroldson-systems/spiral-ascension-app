@@ -13,7 +13,7 @@ export type PhaseTimeline = {
   next: PhaseWindow | null;
 };
 
-function phaseKey(p: typeof LunarPhase.newMoon): string {
+function phaseKey(p: LunarPhase): string {
   if ('newMoon' in p) return 'newMoon';
   if ('waxingCrescent' in p) return 'waxingCrescent';
   if ('firstQuarter' in p) return 'firstQuarter';
@@ -26,7 +26,7 @@ function phaseKey(p: typeof LunarPhase.newMoon): string {
 }
 
 export function getPhaseTimeline(
-  phases: { phase: typeof LunarPhase.newMoon; startDate: bigint; endDate: bigint }[],
+  phases: { phase: LunarPhase; startDate: bigint; endDate: bigint }[],
   nowMs: number
 ): PhaseTimeline {
   const windows: PhaseWindow[] = phases.map((phase, index) => ({
@@ -52,14 +52,14 @@ export function getPhaseTimeline(
 }
 
 export function getCurrentPhase(
-  phases: { phase: typeof LunarPhase.newMoon; startDate: bigint; endDate: bigint }[],
+  phases: { phase: LunarPhase; startDate: bigint; endDate: bigint }[],
   nowMs: number
 ): PhaseWindow | null {
   return getPhaseTimeline(phases, nowMs).current;
 }
 
 export function getNextPhase(
-  phases: { phase: typeof LunarPhase.newMoon; startDate: bigint; endDate: bigint }[],
+  phases: { phase: LunarPhase; startDate: bigint; endDate: bigint }[],
   nowMs: number
 ): PhaseWindow | null {
   return getPhaseTimeline(phases, nowMs).next;
