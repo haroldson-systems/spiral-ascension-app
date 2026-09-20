@@ -37,7 +37,7 @@ export default function Navigation() {
           </Link>
 
           <Link
-            to="/account/password"
+            to="/account"
             className="inline-flex items-center rounded-full border border-purple-400/30 bg-white/5 px-4 py-2 text-sm font-medium text-[#e8e8f0] transition-colors hover:bg-white/10 md:hidden"
           >
             Account
@@ -60,7 +60,7 @@ export default function Navigation() {
             </Link>
 
             <Link
-              to="/account/password"
+              to="/account"
               className="text-[#e8e8f0]/70 hover:text-[#e8e8f0] transition-colors"
             >
               Account

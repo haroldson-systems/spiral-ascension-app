@@ -28,6 +28,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
 import { PrivacyPage, SupportPage, TermsPage } from "./pages/LegalPage";
+import AccountPage from "./pages/AccountPage";
 import { AppAccessGate } from "./components/AppAccessGate";
 import { AdminAccessGate } from "./components/AdminAccessGate";
 
@@ -110,6 +111,7 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/auth/forgot" element={<ForgotPasswordPage />} />
               <Route path="/auth/reset" element={<ResetPasswordPage />} />
+              <Route path="/account" element={<AccountPage />} />
               <Route path="/account/password" element={<ChangePasswordPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />

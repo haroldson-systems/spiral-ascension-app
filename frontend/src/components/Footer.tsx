@@ -24,7 +24,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><Link to="/subscribe" className={linkClass}>Start Free Trial</Link></li>
               <li><Link to="/auth" className={linkClass}>Sign In</Link></li>
-              <li><Link to="/account/password" className={linkClass}>Account</Link></li>
+              <li><Link to="/account" className={linkClass}>Account</Link></li>
             </ul>
           </div>
 

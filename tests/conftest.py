@@ -68,6 +68,10 @@ class FakeQuery:
         self._filters.append((column, value))
         return self
 
+    def ilike(self, column, pattern):
+        self._filters.append((column, ("ilike", pattern)))
+        return self
+
     def order(self, *_args, **_kwargs):
         return self
 
@@ -79,7 +83,13 @@ class FakeQuery:
         return self._store.setdefault(self._table, [])
 
     def _matches(self, row):
-        return all(row.get(col) == val for col, val in self._filters)
+        for col, val in self._filters:
+            if isinstance(val, tuple) and val[0] == "ilike":
+                if str(row.get(col) or "").lower() != val[1].lower():
+                    return False
+            elif row.get(col) != val:
+                return False
+        return True
 
     def execute(self):
         rows = self._rows()
@@ -115,24 +125,40 @@ class FakeQuery:
         raise AssertionError(f"unsupported op {self._op}")
 
 
+class FakeAuthAdmin:
+    def __init__(self):
+        self.deleted_users = []
+        self.fail = False
+
+    def delete_user(self, user_id):
+        if self.fail:
+            raise Exception("auth admin unavailable")
+        self.deleted_users.append(user_id)
+
+
 class FakeAuth:
     """Maps access tokens -> user ids. Anything else is an invalid token."""
 
-    def __init__(self, tokens):
+    def __init__(self, tokens, emails=None):
         self.tokens = dict(tokens)
+        self.emails = dict(emails or {})
         self.calls = []
+        self.admin = FakeAuthAdmin()
 
     def get_user(self, token):
         self.calls.append(token)
         if token not in self.tokens:
             raise Exception("invalid JWT")  # mirrors gotrue AuthApiError
-        return SimpleNamespace(user=SimpleNamespace(id=self.tokens[token], email=None))
+        user_id = self.tokens[token]
+        return SimpleNamespace(
+            user=SimpleNamespace(id=user_id, email=self.emails.get(user_id), created_at="2026-01-01T00:00:00+00:00", is_anonymous=False)
+        )
 
 
 class FakeSupabase:
-    def __init__(self, tokens):
+    def __init__(self, tokens, emails=None):
         self.store = {}
-        self.auth = FakeAuth(tokens)
+        self.auth = FakeAuth(tokens, emails)
 
     def table(self, name):
         return FakeQuery(self.store, name)
@@ -144,6 +170,8 @@ USER_A = "11111111-1111-1111-1111-111111111111"
 USER_B = "22222222-2222-2222-2222-222222222222"
 TOKEN_A = "token-for-user-a"
 TOKEN_B = "token-for-user-b"
+EMAIL_A = "UserA@example.com"
+EMAIL_B = "userb@example.com"
 
 
 @pytest.fixture()
@@ -151,7 +179,7 @@ def server_module(monkeypatch):
     import server  # noqa: WPS433 (import after env setup)
 
     importlib.reload(server)
-    fake = FakeSupabase({TOKEN_A: USER_A, TOKEN_B: USER_B})
+    fake = FakeSupabase({TOKEN_A: USER_A, TOKEN_B: USER_B}, {USER_A: EMAIL_A, USER_B: EMAIL_B})
     monkeypatch.setattr(server, "supabase", fake)
     getattr(server, "_verified_user_cache", {}).clear()
     return server
