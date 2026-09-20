@@ -1,5 +1,5 @@
 import { Event, eventTypeKey, eventTypeFromKey, lunarPhaseKey, lunarPhaseFromKey } from './backend';
-import { getAccessToken } from '@/lib/apiAuth';
+import { withAuthHeaders, apiErrorMessage } from '@/lib/apiAuth';
 
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ??
@@ -30,8 +30,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const token = await withTimeout(getAccessToken());
-  headers.set('Authorization', `Bearer ${token}`);
+  await withTimeout(withAuthHeaders(headers));
 
   const response = await withTimeout(
     fetch(`${API_BASE}${path}`, {
@@ -41,8 +40,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   );
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed: ${response.status}`);
+    throw new Error(await apiErrorMessage(response));
   }
 
   return response.json() as Promise<T>;
