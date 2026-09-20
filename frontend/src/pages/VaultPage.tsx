@@ -4,9 +4,18 @@ import VaultSection from '@/components/VaultSection';
 import { homeSectionHref } from '@/lib/homeNavigation';
 
 export default function VaultPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const modeParam = searchParams.get('mode');
   const initialMode = modeParam === 'spiral' || modeParam === 'personal' ? modeParam : undefined;
+
+  // Keep ?mode= in step with the user's choice so a reload lands on the mode
+  // they actually selected instead of the one from the original deep link.
+  const handleModeChange = (mode: 'spiral' | 'personal') => {
+    if (searchParams.get('mode') === mode) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('mode', mode);
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a0b2e] via-[#3a2563] to-[#1a0b2e]">
@@ -28,7 +37,7 @@ export default function VaultPage() {
       </header>
 
       <main>
-        <VaultSection initialMode={initialMode} />
+        <VaultSection initialMode={initialMode} onModeChange={handleModeChange} />
         <div className="container mx-auto flex justify-center px-4 pb-12">
           <Link
             to={homeSectionHref('vault')}
