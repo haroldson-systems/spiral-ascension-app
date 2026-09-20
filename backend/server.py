@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import List, Optional
 import time
+import uuid
 from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
@@ -209,7 +210,9 @@ class BillingStatusResponse(BaseModel):
 class MoonSyncEventIn(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    id: str
+    # Optional client-chosen id. `moonsync_events.id` is a uuid column, so anything
+    # that is not a valid UUID is replaced server-side (see normalize_event_id).
+    id: Optional[str] = None
     title: str
     description: Optional[str] = None
     eventType: str
@@ -235,7 +238,7 @@ class MoonSyncEventUpdate(BaseModel):
 # still sends it and it disagrees with the verified identity, the request is
 # rejected so a mismatch can never silently touch another user's rows.
 
-AUTH_USER_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_USER_CACHE_TTL_SECONDS", "60"))
+AUTH_USER_CACHE_TTL_SECONDS = int(os.environ.get("AUTH_USER_CACHE_TTL_SECONDS", "0"))
 _verified_user_cache: dict = {}
 
 
@@ -252,8 +255,12 @@ def verify_supabase_access_token(token: str) -> dict:
     Supabase access token, else raise 401.
 
     Verification is delegated to Supabase Auth (`auth.get_user`), which checks the
-    signature, expiry and revocation. Successful lookups are cached briefly to keep
-    per-request latency low without trusting client-supplied identity.
+    signature, expiry AND whether the session still exists (sign-out / revocation).
+
+    Caching is OFF by default (AUTH_USER_CACHE_TTL_SECONDS=0) so every request re-checks
+    revocation. Setting a TTL trades one Supabase round-trip per request for a window in
+    which a just-revoked token is still accepted for up to TTL seconds. Only enable it if
+    latency becomes a problem and that window is acceptable.
     """
     if not token:
         raise HTTPException(status_code=401, detail="Authentication required")
@@ -1185,12 +1192,33 @@ async def list_moonsync_events(request: Request):
     ]
 
 
+def is_valid_uuid(value: Optional[str]) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def normalize_event_id(client_id: Optional[str]) -> str:
+    """`moonsync_events.id` is a Postgres uuid column.
+
+    Older clients generated ids like `event_<timestamp>_<random>`; Postgres rejects those
+    (22P02 invalid input syntax for type uuid) and the event was silently never saved.
+    Accept a valid UUID from the client, otherwise mint one here.
+    """
+    if client_id and is_valid_uuid(client_id):
+        return str(uuid.UUID(client_id))
+    return str(uuid.uuid4())
+
+
 @api_router.post("/moonsync/events")
 async def create_moonsync_event(payload: MoonSyncEventIn, request: Request):
     user_id = get_moonsync_user_id(request)
     ensure_moonsync_user_row(user_id)
+    event_id = normalize_event_id(payload.id)
     doc = {
-        "id": payload.id,
+        "id": event_id,
         "user_id": user_id,
         "title": payload.title,
         "description": payload.description,
@@ -1200,12 +1228,14 @@ async def create_moonsync_event(payload: MoonSyncEventIn, request: Request):
     }
     response = supabase.table("moonsync_events").insert(doc).execute()
     _ = get_data(response)
-    return {"ok": True}
+    return {"ok": True, "id": event_id}
 
 
 @api_router.put("/moonsync/events/{event_id}")
 async def update_moonsync_event(event_id: str, payload: MoonSyncEventUpdate, request: Request):
     user_id = get_moonsync_user_id(request)
+    if not is_valid_uuid(event_id):
+        raise HTTPException(status_code=404, detail="Event not found")
     doc = {
         "title": payload.title,
         "description": payload.description,
@@ -1227,6 +1257,8 @@ async def update_moonsync_event(event_id: str, payload: MoonSyncEventUpdate, req
 @api_router.delete("/moonsync/events/{event_id}")
 async def delete_moonsync_event(event_id: str, request: Request):
     user_id = get_moonsync_user_id(request)
+    if not is_valid_uuid(event_id):
+        raise HTTPException(status_code=404, detail="Event not found")
     response = (
         supabase.table("moonsync_events")
         .delete()

@@ -8,10 +8,12 @@ import copy
 import importlib
 import os
 import sys
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from postgrest.exceptions import APIError as PostgrestAPIError
 
 BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
 if str(BACKEND_DIR) not in sys.path:
@@ -100,6 +102,16 @@ class FakeQuery:
             if self._table == "billing_webhook_events" and any(r["event_id"] == doc["event_id"] for r in rows):
                 from postgrest.exceptions import APIError
                 raise APIError({"message": 'duplicate key value violates unique constraint "billing_webhook_events_pkey"', "code": "23505", "hint": None, "details": None})
+            # Production `moonsync_events.id` is a uuid column: mirror Postgres and reject
+            # anything else (22P02) so tests catch ids the real database would refuse.
+            if self._table == "moonsync_events" and "id" in doc:
+                try:
+                    uuid.UUID(str(doc["id"]))
+                except (ValueError, TypeError):
+                    raise PostgrestAPIError({
+                        "code": "22P02", "message": f"invalid input syntax for type uuid: \"{doc['id']}\"",
+                        "details": None, "hint": None,
+                    })
             doc.setdefault("id", f"row-{len(rows) + 1}")
             doc.setdefault("created_at", "2026-01-01T00:00:00+00:00")
             rows.append(doc)

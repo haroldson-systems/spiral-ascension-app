@@ -2,68 +2,42 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import EventDialog from './EventDialog';
-import { useMoonPhase } from '../hooks/useMoonPhase';
+import { useCurrentPhase } from '../hooks/useCurrentPhase';
+import { amplifyPhases, fallbackAlignment, phaseAlignment } from '../data/phaseAlignment';
+import { fallbackHarmonicAlignment, harmonicAlignment } from '../data/harmonicAlignment';
 
 export default function EventManager() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [prefillTitle, setPrefillTitle] = useState<string | undefined>(undefined);
-  const phaseData = useMoonPhase();
+  // Same phase source as LunarDisplay above, so both blocks always agree.
+  const current = useCurrentPhase();
+  const { is13Month, phaseKey, phaseName, harmonic } = current;
 
-  const phaseAlignment = useMemo(() => {
-    const alignmentMap: Record<string, { bestFor: string; notIdealFor: string }> = {
-      'New Moon': {
-        bestFor: 'setting intentions, new beginnings, planting seeds',
-        notIdealFor: 'closing loops, heavy release work'
-      },
-      'Waxing Crescent': {
-        bestFor: 'building momentum, early action, gathering resources',
-        notIdealFor: 'completion work, deep reflection'
-      },
-      'First Quarter': {
-        bestFor: 'decision-making, pushing through resistance, taking action',
-        notIdealFor: 'rest, waiting'
-      },
-      'Waxing Gibbous': {
-        bestFor: 'refining, adjusting, commitment',
-        notIdealFor: 'starting from scratch'
-      },
-      'Full Moon': {
-        bestFor: 'culmination, celebration, visibility, completion',
-        notIdealFor: 'quiet reflection, low-energy work'
-      },
-      'Waning Gibbous': {
-        bestFor: 'release, completion, gratitude, closing loops',
-        notIdealFor: 'new launches, initiation, pushing hard'
-      },
-      'Last Quarter': {
-        bestFor: 'letting go, evaluation, clearing space',
-        notIdealFor: 'new commitments, starting projects'
-      },
-      'Waning Crescent': {
-        bestFor: 'rest, integration, deep reflection',
-        notIdealFor: 'new commitments, external action'
-      }
-    };
-
-    return (
-      alignmentMap[phaseData?.phase ?? ''] ?? {
-        bestFor: 'reflection and phase-aware planning',
-        notIdealFor: 'forcing action without clarity'
-      }
-    );
-  }, [phaseData]);
+  const alignment = useMemo(() => {
+    if (is13Month) {
+      const entry = harmonicAlignment[harmonic.month.month_number] ?? fallbackHarmonicAlignment;
+      return { bestFor: entry.best_for, notIdealFor: entry.not_ideal_for };
+    }
+    return phaseAlignment[phaseKey] ?? fallbackAlignment;
+  }, [is13Month, harmonic, phaseKey]);
 
   const energeticLabel = useMemo(() => {
-    const phase = phaseData?.phase ?? 'current phase';
-    const isMomentum =
-      /New|Waxing|Full/.test(phase);
-    return isMomentum ? 'Amplify momentum' : 'Dissolve resistance';
-  }, [phaseData]);
+    const amplify = is13Month
+      ? (harmonicAlignment[harmonic.month.month_number] ?? fallbackHarmonicAlignment).energetic_mode === 'amplify'
+      : amplifyPhases.has(phaseKey);
+    return amplify ? 'Amplify momentum' : 'Dissolve resistance';
+  }, [is13Month, harmonic, phaseKey]);
 
   const commitLabel = useMemo(() => {
-    const phase = phaseData?.phase ?? 'current phase';
-    return `Commit to a shift matching the ${phase} arc`;
-  }, [phaseData]);
+    if (is13Month) {
+      const entry = harmonicAlignment[harmonic.month.month_number];
+      return entry?.action ?? `Commit to a shift matching the ${harmonic.month.name} · ${harmonic.month.archetype} arc`;
+    }
+    return `Commit to a shift matching the ${phaseName} arc`;
+  }, [is13Month, harmonic, phaseName]);
+
+  const arcLabel = is13Month ? `${harmonic.month.name} · ${harmonic.month.archetype}` : phaseName;
+  const alignmentTitle = is13Month ? 'Harmonic Alignment' : 'Phase Alignment';
 
   const openWithTitle = (title?: string) => {
     setPrefillTitle(title);
@@ -77,7 +51,9 @@ export default function EventManager() {
           <div className="space-y-1">
             <CardTitle className="text-white">Choose Your Action</CardTitle>
             <CardDescription className="text-purple-200">
-              Simple, phase-aligned actions you can anchor into your MoonSync log.
+              {is13Month
+                ? `Simple actions aligned with the ${arcLabel} month, ready to anchor into your MoonSync log.`
+                : 'Simple, phase-aligned actions you can anchor into your MoonSync log.'}
             </CardDescription>
           </div>
         </CardHeader>
@@ -143,12 +119,13 @@ export default function EventManager() {
           </div>
 
           <div className="space-y-2 border-t border-purple-400/15 pt-4">
-            <p className="text-xs uppercase tracking-wide text-purple-300">Phase Alignment</p>
+            <p className="text-xs uppercase tracking-wide text-purple-300">{alignmentTitle}</p>
+            <p className="text-xs text-purple-300/80">{arcLabel}</p>
             <p className="text-sm text-purple-200">
-              <span className="font-medium text-purple-100">Best for:</span> {phaseAlignment.bestFor}
+              <span className="font-medium text-purple-100">Best for:</span> {alignment.bestFor}
             </p>
             <p className="text-sm text-purple-200">
-              <span className="font-medium text-purple-100">Not ideal for:</span> {phaseAlignment.notIdealFor}
+              <span className="font-medium text-purple-100">Not ideal for:</span> {alignment.notIdealFor}
             </p>
           </div>
 

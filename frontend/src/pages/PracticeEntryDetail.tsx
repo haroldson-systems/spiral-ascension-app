@@ -52,6 +52,7 @@ function PracticeReflectionBox({ practiceTitle, parentTitle, prompts }: Practice
   const [answers, setAnswers] = useState<string[]>(() => prompts.map(() => ''));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const hasAnswer = answers.some((answer) => answer.trim().length > 0);
 
   const handleAnswerChange = (index: number, value: string) => {
@@ -87,8 +88,10 @@ function PracticeReflectionBox({ practiceTitle, parentTitle, prompts }: Practice
         type: 'text',
       });
       setStatus('saved');
-    } catch {
+      setErrorDetail(null);
+    } catch (err) {
       setStatus('error');
+      setErrorDetail(err instanceof Error && err.message ? err.message : null);
     } finally {
       setSaving(false);
     }
@@ -150,6 +153,7 @@ function PracticeReflectionBox({ practiceTitle, parentTitle, prompts }: Practice
       {status === 'error' && (
         <p className="mt-3 text-sm font-medium text-red-300">
           Could not save this reflection. Please try again.
+          {errorDetail && <span className="block mt-1 font-normal text-red-300/80 break-words">{errorDetail}</span>}
         </p>
       )}
     </section>

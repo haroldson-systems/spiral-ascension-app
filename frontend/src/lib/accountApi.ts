@@ -1,12 +1,10 @@
-import { getAccessToken } from '@/lib/apiAuth';
+import { withAuthHeaders } from '@/lib/apiAuth';
 
 const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://127.0.0.1:8001/api';
 
 async function authedFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = await getAccessToken();
-  const headers = new Headers(init.headers ?? {});
-  headers.set('Authorization', `Bearer ${token}`);
+  const headers = await withAuthHeaders(new Headers(init.headers ?? {}));
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   return fetch(`${API_BASE}${path}`, { ...init, headers });
 }

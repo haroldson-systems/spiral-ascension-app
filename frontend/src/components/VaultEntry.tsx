@@ -9,7 +9,14 @@ export interface JournalEntry {
 }
 
 interface VaultEntryProps {
-  onSave: (entry: Omit<JournalEntry, 'id' | 'timestamp'>) => void;
+  /** Must resolve only after the entry is persisted; reject/throw on failure. */
+  onSave: (entry: Omit<JournalEntry, 'id' | 'timestamp'>) => Promise<void> | void;
+}
+
+function describeError(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === 'string' && err) return err;
+  return 'Unknown error';
 }
 
 export default function VaultEntry({ onSave }: VaultEntryProps) {
@@ -17,6 +24,9 @@ export default function VaultEntry({ onSave }: VaultEntryProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedNotice, setSavedNotice] = useState(false);
 
   const handleAddTag = () => {
     if (currentTag && !tags.includes(currentTag)) {
@@ -29,15 +39,26 @@ export default function VaultEntry({ onSave }: VaultEntryProps) {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const handleSave = () => {
-    if (content.trim()) {
-      onSave({
+  const handleSave = async () => {
+    if (!content.trim() || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    setSavedNotice(false);
+    try {
+      // Only clear the editor once the insert has actually succeeded, so a
+      // failed save never silently discards what the user wrote.
+      await onSave({
         content,
         tags,
         type: 'text'
       });
       setContent('');
       setTags([]);
+      setSavedNotice(true);
+    } catch (err) {
+      setSaveError(describeError(err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -103,12 +124,29 @@ export default function VaultEntry({ onSave }: VaultEntryProps) {
         
         <button
           onClick={handleSave}
-          disabled={!content.trim()}
+          disabled={!content.trim() || saving}
           className="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          Save to Vault
+          {saving ? 'Saving…' : 'Save to Vault'}
         </button>
       </div>
+
+      {saveError && (
+        <div
+          role="alert"
+          data-testid="vault-save-error"
+          className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+        >
+          <p className="font-semibold">Your writing was not saved.</p>
+          <p className="mt-1 break-words text-red-200/80">{saveError}</p>
+          <p className="mt-1 text-red-200/60">Your text is still here — try again.</p>
+        </div>
+      )}
+      {savedNotice && !saveError && (
+        <p role="status" data-testid="vault-save-success" className="mt-4 text-sm text-[#d4af37]">
+          Saved to your vault.
+        </p>
+      )}
     </div>
   );
 }
