@@ -99,6 +99,9 @@ class FakeQuery:
             return FakeResponse([copy.deepcopy(r) for r in rows if self._matches(r)])
         if self._op == "insert":
             doc = dict(self._payload)
+            if self._table == "billing_webhook_events" and any(r["event_id"] == doc["event_id"] for r in rows):
+                from postgrest.exceptions import APIError
+                raise APIError({"message": 'duplicate key value violates unique constraint "billing_webhook_events_pkey"', "code": "23505", "hint": None, "details": None})
             # Production `moonsync_events.id` is a uuid column: mirror Postgres and reject
             # anything else (22P02) so tests catch ids the real database would refuse.
             if self._table == "moonsync_events" and "id" in doc:

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { deleteAccount, downloadAccountExport } from '@/lib/accountApi';
+import { createAccountPortalSession, fetchBillingStatus, type BillingStatus } from '@/lib/billingApi';
 
 const CONFIRM_WORD = 'DELETE';
 
@@ -16,6 +17,10 @@ export default function AccountPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
+
+  const [billing, setBilling] = useState<BillingStatus | null>(null);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
 
   const [isExporting, setIsExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
@@ -52,6 +57,36 @@ export default function AccountPage() {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!session?.user) {
+      setBilling(null);
+      return;
+    }
+    let active = true;
+    fetchBillingStatus()
+      .then((status) => {
+        if (active) setBilling(status);
+      })
+      .catch(() => {
+        if (active) setBilling(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+
+  const handleManageBilling = async () => {
+    setBillingError(null);
+    setIsOpeningPortal(true);
+    try {
+      const { url } = await createAccountPortalSession(`${window.location.origin}/account`);
+      window.location.assign(url);
+    } catch (err) {
+      setBillingError(err instanceof Error ? err.message : 'Could not open billing. Please try again.');
+      setIsOpeningPortal(false);
+    }
+  };
 
   const handleExport = async () => {
     setExportMessage(null);
@@ -128,6 +163,51 @@ export default function AccountPage() {
                     </Link>
                   </li>
                 </ul>
+              </section>
+
+              <section className="mt-8 space-y-3 border-t border-purple-700/40 pt-6">
+                <h2 className="text-lg font-semibold text-white">Membership &amp; billing</h2>
+                {billing?.paymentFailed ? (
+                  <p className="rounded-lg border border-amber-400/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100" role="alert">
+                    Your last payment failed. Update your payment method to keep access.
+                  </p>
+                ) : null}
+                <p className="text-sm leading-relaxed text-purple-200/85">
+                  {billing?.status ? (
+                    <>
+                      Status: <span className="font-semibold text-white">{billing.status}</span>
+                      {billing.cancelAtPeriodEnd && billing.currentPeriodEnd
+                        ? ` — cancels on ${new Date(billing.currentPeriodEnd).toLocaleDateString()}`
+                        : billing.trialEnd && billing.status === 'trialing'
+                          ? ` — trial ends ${new Date(billing.trialEnd).toLocaleDateString()}`
+                          : ''}
+                    </>
+                  ) : (
+                    'No subscription is linked to this account yet.'
+                  )}
+                </p>
+                {billing?.hasCustomer ? (
+                  <button type="button" onClick={handleManageBilling} disabled={isOpeningPortal} className={primaryButtonClass}>
+                    {isOpeningPortal ? 'Opening billing…' : 'Manage billing (update card / cancel)'}
+                  </button>
+                ) : billing?.needsLinking ? (
+                  <p className="rounded-lg border border-amber-400/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
+                    A subscription matches your email but is not linked to this account yet. Email{' '}
+                    <a className="font-semibold underline" href="mailto:support@thespiralascension.com">
+                      support@thespiralascension.com
+                    </a>{' '}
+                    and we will link it.
+                  </p>
+                ) : (
+                  <Link to="/subscribe" className={linkClass}>
+                    Start free trial
+                  </Link>
+                )}
+                {billingError ? (
+                  <p className="text-sm text-red-300" role="alert">
+                    {billingError}
+                  </p>
+                ) : null}
               </section>
 
               <section className="mt-8 space-y-3 border-t border-purple-700/40 pt-6">
