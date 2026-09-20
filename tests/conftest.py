@@ -8,10 +8,12 @@ import copy
 import importlib
 import os
 import sys
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from postgrest.exceptions import APIError as PostgrestAPIError
 
 BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
 if str(BACKEND_DIR) not in sys.path:
@@ -97,6 +99,16 @@ class FakeQuery:
             return FakeResponse([copy.deepcopy(r) for r in rows if self._matches(r)])
         if self._op == "insert":
             doc = dict(self._payload)
+            # Production `moonsync_events.id` is a uuid column: mirror Postgres and reject
+            # anything else (22P02) so tests catch ids the real database would refuse.
+            if self._table == "moonsync_events" and "id" in doc:
+                try:
+                    uuid.UUID(str(doc["id"]))
+                except (ValueError, TypeError):
+                    raise PostgrestAPIError({
+                        "code": "22P02", "message": f"invalid input syntax for type uuid: \"{doc['id']}\"",
+                        "details": None, "hint": None,
+                    })
             doc.setdefault("id", f"row-{len(rows) + 1}")
             doc.setdefault("created_at", "2026-01-01T00:00:00+00:00")
             rows.append(doc)

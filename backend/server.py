@@ -9,6 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import List, Optional
 import time
+import uuid
 from datetime import datetime, timezone, timedelta, date
 from supabase import create_client, Client
 from postgrest.exceptions import APIError as PostgrestAPIError
@@ -207,7 +208,9 @@ class PortalSessionResponse(BaseModel):
 class MoonSyncEventIn(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    id: str
+    # Optional client-chosen id. `moonsync_events.id` is a uuid column, so anything
+    # that is not a valid UUID is replaced server-side (see normalize_event_id).
+    id: Optional[str] = None
     title: str
     description: Optional[str] = None
     eventType: str
@@ -1089,12 +1092,33 @@ async def list_moonsync_events(request: Request):
     ]
 
 
+def is_valid_uuid(value: Optional[str]) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def normalize_event_id(client_id: Optional[str]) -> str:
+    """`moonsync_events.id` is a Postgres uuid column.
+
+    Older clients generated ids like `event_<timestamp>_<random>`; Postgres rejects those
+    (22P02 invalid input syntax for type uuid) and the event was silently never saved.
+    Accept a valid UUID from the client, otherwise mint one here.
+    """
+    if client_id and is_valid_uuid(client_id):
+        return str(uuid.UUID(client_id))
+    return str(uuid.uuid4())
+
+
 @api_router.post("/moonsync/events")
 async def create_moonsync_event(payload: MoonSyncEventIn, request: Request):
     user_id = get_moonsync_user_id(request)
     ensure_moonsync_user_row(user_id)
+    event_id = normalize_event_id(payload.id)
     doc = {
-        "id": payload.id,
+        "id": event_id,
         "user_id": user_id,
         "title": payload.title,
         "description": payload.description,
@@ -1104,12 +1128,14 @@ async def create_moonsync_event(payload: MoonSyncEventIn, request: Request):
     }
     response = supabase.table("moonsync_events").insert(doc).execute()
     _ = get_data(response)
-    return {"ok": True}
+    return {"ok": True, "id": event_id}
 
 
 @api_router.put("/moonsync/events/{event_id}")
 async def update_moonsync_event(event_id: str, payload: MoonSyncEventUpdate, request: Request):
     user_id = get_moonsync_user_id(request)
+    if not is_valid_uuid(event_id):
+        raise HTTPException(status_code=404, detail="Event not found")
     doc = {
         "title": payload.title,
         "description": payload.description,
@@ -1131,6 +1157,8 @@ async def update_moonsync_event(event_id: str, payload: MoonSyncEventUpdate, req
 @api_router.delete("/moonsync/events/{event_id}")
 async def delete_moonsync_event(event_id: str, request: Request):
     user_id = get_moonsync_user_id(request)
+    if not is_valid_uuid(event_id):
+        raise HTTPException(status_code=404, detail="Event not found")
     response = (
         supabase.table("moonsync_events")
         .delete()
